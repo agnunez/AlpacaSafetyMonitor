@@ -15,6 +15,7 @@
 #include <FS.h>
 
 #include "focuser.h"
+#include "msgbuffer.h"
 
 // 
 bool encA, encB;
@@ -36,7 +37,7 @@ void update_serial();
 void update_tcpip();
 
 // client communication
-void parseCommand(Stream &stream);
+void parseCommand(Stream& stream, msg_t msg);
 void printConnect(Stream &stream);
 
 // interrupt routines

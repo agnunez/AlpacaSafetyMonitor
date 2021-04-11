@@ -72,7 +72,7 @@ void Focuser::update()
 
     // do temp compensation if enabled
     if (_temp_comp && _temp_meas != NAN) {
-        int32_t corrected = nearbyint(_temp_coeff * _temp_meas + _pos_target);
+        int32_t corrected = nearbyintf(_temp_coeff * _temp_meas + _pos_target);
         target = constrain(corrected, _pos_min, _pos_max);
         
     } else {

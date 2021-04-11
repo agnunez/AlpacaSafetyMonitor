@@ -7,6 +7,10 @@ Focuser focuser[N_FOCUSERS] = {
 };
 WiFiServer tcpServer(TCP_PORT);
 WiFiClient tcpClient;
+
+MsgBuffer tcpMsgBuffer("TCP/IP");
+MsgBuffer usbMsgBuffer("USB Serial");
+
 //Focuser focuser2 = Focuser(&STP2_SERIAL, STP2_RX, STP2_TX, STP2_STEP, STP2_DIR, STP2_EN, PIN_HOME2);
 
 void setup() {
@@ -129,7 +133,9 @@ void update_focus()
 
 void update_serial()
 {
-
+  while(usbMsgBuffer.parse(Serial)) {
+    parseCommand(Serial, usbMsgBuffer.getMsg());
+  }
 }
 
 void update_tcpip()
@@ -139,6 +145,7 @@ void update_tcpip()
   {
     tcpClient = tcpServer.available();    
     if (tcpClient.connected()) {
+      // send welcome
       printConnect(tcpClient);
       Serial.print("# Client connected from ");
       Serial.print(tcpClient.remoteIP());
@@ -146,8 +153,10 @@ void update_tcpip()
       tcpClient.setTimeout(1);
     }
   } else {
-    while (tcpClient.available() > 4)
-      parseCommand(tcpClient);
+    // parse commands in buffer
+    while(tcpMsgBuffer.parse(tcpClient)) {
+      parseCommand(tcpClient, tcpMsgBuffer.getMsg());
+    }
   }
 }
 
@@ -162,8 +171,17 @@ void reply(Stream &stream, char reg, uint8_t idx, T (Focuser::*arg)())
   stream.print((focuser[idx].*arg)());
   stream.print('\n');
 }
+void reply(Stream &stream, char reg, uint8_t idx, float (Focuser::*arg)())
+{
+  stream.print('%');
+  stream.print(reg);
+  stream.print(idx+1);
+  stream.print(':');
+  stream.print((focuser[idx].*arg)(), 5);
+  stream.print('\n');
+}
 
-void parseCommand(Stream &stream)
+void parseCommand(Stream& stream, msg_t msg)
 {
   //  [0] cmd
   //    $ = write
@@ -177,8 +195,10 @@ void parseCommand(Stream &stream)
   //    C = temp compensation (RW)
   //    X = temp compensation coefficent (RW)
   //    E = end of travel (RW)
+  //    R = resolution (steps per um)
+  //    
   //  [2] device # (1 or 2, * for n/a)
-  //  [3] ':' (optional if no argument is following)
+  //  [3] ':'
   //  [4:] argument (only for some writes)
   //
   // examples:
@@ -187,66 +207,65 @@ void parseCommand(Stream &stream)
   //    %T1:
   //    %T1
 
-  // get line from stream
-  String msg = stream.readStringUntil('\n');
-  // remove trailing carriage return if windows system
-  if (msg[msg.length()-1] == '\r')
-    msg[msg.length()-1] = '\0';
+#ifdef DEBUG
+  uint32_t t_start = micros();
+#endif
 
-  char cmd = msg[0];
-  char reg = msg[1];
-  uint8_t idx = msg[2] - '1'; // convert ascii 1,2,3,4 to uint8_t 0,1,2,3
-  String arg = msg.substring(4);
-  uint32_t arg_len = arg.length();
-
-  if (idx>N_FOCUSERS) {
+  // check index
+  if (msg.idx()>N_FOCUSERS) { 
     stream.println(msg_invalid_index);
-    return;
   }
-
   // read
-  if (cmd == '%') {
-    if (arg_len > 0) {
-      stream.println(msg_invalid_format);
+  else if (msg.cmd() == '%') {
+    if (!msg.col_empty()) {
+      stream.println(msg_invalid_arg);
     } else {
-      switch (reg) {
-        case 'P': reply(stream, reg, idx, &Focuser::getPosition); break;
-        case 'M': reply(stream, reg, idx, &Focuser::getTarget); break;
-        case 'T': reply(stream, reg, idx, &Focuser::getTemperature); break;
-        case 'Z': reply(stream, reg, idx, &Focuser::isZeroed); break;
-        case 'S': reply(stream, reg, idx, &Focuser::isMoving); break;
-        case 'C': reply(stream, reg, idx, &Focuser::getTempComp); break;
-        case 'X': reply(stream, reg, idx, &Focuser::getTempCoeff); break;
-        case 'E': reply(stream, reg, idx, &Focuser::getLimit); break;
-        case 'R': reply(stream, reg, idx, &Focuser::getStepsPerMM); break;
+      switch (msg.reg()) {
+        case 'P': reply(stream, msg.reg(), msg.idx(), &Focuser::getPosition); break;
+        case 'M': reply(stream, msg.reg(), msg.idx(), &Focuser::getTarget); break;
+        case 'T': reply(stream, msg.reg(), msg.idx(), &Focuser::getTemperature); break;
+        case 'Z': reply(stream, msg.reg(), msg.idx(), &Focuser::isZeroed); break;
+        case 'S': reply(stream, msg.reg(), msg.idx(), &Focuser::isMoving); break;
+        case 'C': reply(stream, msg.reg(), msg.idx(), &Focuser::getTempComp); break;
+        case 'X': reply(stream, msg.reg(), msg.idx(), &Focuser::getTempCoeff); break;
+        case 'E': reply(stream, msg.reg(), msg.idx(), &Focuser::getLimit); break;
+        case 'R': reply(stream, msg.reg(), msg.idx(), &Focuser::getStepsPerMM); break;
         default:
-          stream.println(msg_invalid_format);
+          stream.println(msg_invalid_reg);
       }
     }
   }
+
   // write
-  else if (cmd == '$') {
-    if (reg == 'Z' || reg == 'S') { // if Z or S, no arguments expected
-      if (arg_len > 0) {
-        stream.println(msg_invalid_format);
-      }
-    } else if (arg_len < 1) { // all other need minimum length 1 argument
-      stream.println(msg_invalid_format);
-    } else { // go ahead and hope argument is valid
-      switch (reg) {
-        case 'P': focuser[idx].setPosition(arg.toInt()); break;
-        case 'M': focuser[idx].moveTo(arg.toInt()); break;
-        case 'Z': focuser[idx].zero(); break;
-        case 'S': focuser[idx].stop(); break;
-        case 'C': focuser[idx].setTempComp(arg == "1"); break;
-        case 'X': focuser[idx].setTempCoeff(arg.toFloat()); break;
-        case 'E': focuser[idx].setLimit(arg.toInt());
-        case 'R': focuser[idx].setStepsPerMM(arg.toInt()); break;
+  else if (msg.cmd() == '$') {
+    if ((msg.reg() == 'Z' || msg.reg() == 'S') && !msg.col_empty()) { // if Z or S, no arguments expected
+      stream.println(msg_invalid_arg);
+    } else if (!msg.has_arg()) { // all other need minimum length 1 argument
+      stream.println(msg_invalid_arg);
+    } else {
+      switch (msg.reg()) {
+        case 'P': focuser[msg.idx()].setPosition(msg.arg_int32()); break;
+        case 'M': focuser[msg.idx()].moveTo(msg.arg_int32()); break;
+        case 'Z': focuser[msg.idx()].zero(); break;
+        case 'S': focuser[msg.idx()].stop(); break;
+        case 'C': focuser[msg.idx()].setTempComp(msg.arg_bool()); break;
+        case 'X': focuser[msg.idx()].setTempCoeff(msg.arg_float()); break;
+        case 'E': focuser[msg.idx()].setLimit(msg.arg_int32());
+        case 'R': focuser[msg.idx()].setStepsPerMM(msg.arg_float()); break;
+        default:
+          stream.println(msg_invalid_reg);
       }
     }
   } else {
-    stream.println(msg_invalid_format);
+    stream.println(msg_invalid_cmd);
   }
+
+#ifdef DEBUG
+  uint32_t t_stop = micros();
+  stream.print("# Time: ");
+  stream.print(t_stop-t_start);
+  stream.print("us \n");
+#endif
 }
 
 void printConnect(Stream &stream)

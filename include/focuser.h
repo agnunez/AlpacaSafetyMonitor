@@ -43,7 +43,7 @@ class Focuser {
         float _speed = STP_MAX_SPEED;
         float _acceleration = STP_ACCELERATION;
         
-        float _temp_coeff = 1.0f;
+        float _temp_coeff = 0.0f;
         float _temp_meas = NAN;
         bool _temp_comp = false;
         bool _zeroed = false;

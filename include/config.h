@@ -7,6 +7,7 @@
 #define N_FOCUSERS          1
 #define COEFF_RANGE         1000 // temp coeff in um/C
 #define HOMING_SPEED        1.0f
+//#define DEBUG
 
 // TMC2208
 #define TMC_RS              0.11f   // Rs of Fysetc TMC2208 is 0.11 Ohm
