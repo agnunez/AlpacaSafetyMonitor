@@ -1,3 +1,4 @@
+#pragma once
 // Stepper 1 pins
 #define STP1_EN      14
 #define STP1_STEP    12
@@ -15,11 +16,14 @@
 #define STP2_SERIAL  Serial2
 
 // INPUTS
-#define STP1_HOME    16
-#define STP2_HOME    17
-#define ROT_ENC_A    15
-#define ROT_ENC_B    4
-#define ROT_SWITCH   5
+#define PIN_HOME1    16
+#define PIN_HOME2    17
+#define PIN_ENC_A    15
+#define PIN_ENC_B    4
+#define PIN_ENC_SEL  5
+
+// Temperature
+#define PIN_DS1820   18
 
 // LEDS
-#define WIFI_LED LED_BUILTIN
+#define PIN_WIFI_LED LED_BUILTIN
