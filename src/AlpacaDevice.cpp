@@ -1,8 +1,5 @@
 #include "AlpacaDevice.h"
 
-extern WebServer alpacaTCP;
-extern int alpacaServerTransactionID;
-
 uint8_t AlpacaDevice::_n_devices = 0;
 void AlpacaDevice::createCallBack(WebServer::THandlerFunction fn, http_method type, const char command[])
 {
@@ -13,11 +10,12 @@ void AlpacaDevice::createCallBack(WebServer::THandlerFunction fn, http_method ty
     Serial.print("\" to ");
     Serial.println(command);
     // register handler for generated URI
-    alpacaTCP.on(url, type, fn);
+    _alpacaTCP->on(url, type, fn);
 }
 
-void AlpacaDevice::registerCallbacks()
+void AlpacaDevice::registerCallbacks(AlpacaServer &alpaca_server)
 {
+    _alpacaTCP = alpaca_server.getTCPServer();
     this->createCallBack(LHF(putAction), HTTP_PUT, "action");
     this->createCallBack(LHF(putCommandBlind), HTTP_PUT, "commandblind");
     this->createCallBack(LHF(putCommandBool), HTTP_PUT, "commandbool");
@@ -34,11 +32,11 @@ void AlpacaDevice::registerCallbacks()
 
 void AlpacaDevice::getClientArgs() {
     String str;
-    str = alpacaTCP.arg("clientid");
+    str = _alpacaTCP->arg("clientid");
     if (str.length() > 0) {
         int clientid = str.toInt();
     }
-    str = alpacaTCP.arg("clienttransactionid");
+    str = _alpacaTCP->arg("clienttransactionid");
     if (str.length() > 0) {
         int transactionid = str.toInt();
     }
@@ -47,39 +45,39 @@ void AlpacaDevice::getClientArgs() {
 // alpaca commands
 void AlpacaDevice::putAction()
 {
-    alpacaTCP.send(200, "text/plain", "Action");
+    _alpacaTCP->send(200, "text/plain", "Action");
 };
 void AlpacaDevice::putCommandBlind()
 {
-    alpacaTCP.send(200, "text/plain", "CommandBlind");
+    _alpacaTCP->send(200, "text/plain", "CommandBlind");
 };
 void AlpacaDevice::putCommandBool(){
-    alpacaTCP.send(200, "text/plain", "CommandBool");
+    _alpacaTCP->send(200, "text/plain", "CommandBool");
 };
 void AlpacaDevice::putCommandString(){
-    alpacaTCP.send(200, "text/plain", "CommandString");
+    _alpacaTCP->send(200, "text/plain", "CommandString");
 };
 void AlpacaDevice::getConnected(){
-    alpacaTCP.send(200, "text/plain", "Connected");
+    _alpacaTCP->send(200, "text/plain", "Connected");
 };
 void AlpacaDevice::putConnected(){
 
 };
 void AlpacaDevice::getDescription(){
-    alpacaTCP.send(200, "text/plain", "Description");
+    _alpacaTCP->send(200, "text/plain", "Description");
 };
 void AlpacaDevice::getDriverInfo(){
-    alpacaTCP.send(200, "text/plain", "DriverInfo");
+    _alpacaTCP->send(200, "text/plain", "DriverInfo");
 };
 void AlpacaDevice::getDriverVersion(){
-    alpacaTCP.send(200, "text/plain", "DriverVersion");
+    _alpacaTCP->send(200, "text/plain", "DriverVersion");
 };
 void AlpacaDevice::getInterfaceVersion(){
-    alpacaTCP.send(200, "text/plain", "InterfaceVersion");
+    _alpacaTCP->send(200, "text/plain", "InterfaceVersion");
 };
 void AlpacaDevice::getName(){
-    alpacaTCP.send(200, "text/plain", "astrofocuser[0]");
+    _alpacaTCP->send(200, "text/plain", "astrofocuser[0]");
 };
 void AlpacaDevice::getSupportedActions(){
-    alpacaTCP.send(200, "text/plain", "SupportedActions");
+    _alpacaTCP->send(200, "text/plain", "SupportedActions");
 };

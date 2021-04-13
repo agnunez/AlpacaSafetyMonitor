@@ -26,5 +26,5 @@ class AlpacaFocuser : public AlpacaDevice
             _device_number = _n_focusers++;
         }
     public:
-        void registerCallbacks();
+        void registerCallbacks(AlpacaServer &alpaca_server);
 };

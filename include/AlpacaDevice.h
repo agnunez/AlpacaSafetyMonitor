@@ -7,6 +7,8 @@
 class AlpacaDevice
 {
     protected:
+        // pointer to server
+        WebServer* _alpacaTCP;
         // naming and numbering
         static AlpacaDevice* _devicelist[16];
         static uint8_t _n_devices;
@@ -35,7 +37,7 @@ class AlpacaDevice
             //_devicelist[_n_devices++] = this;
         }
         public:
-        void registerCallbacks();
+        void registerCallbacks(AlpacaServer &alpaca_server);
         uint8_t getDeviceNumber() { return _device_number; }
         const char* getDeviceType() { return _device_type; }
         //static AlpacaDevice* getDevice(int index) { return _devicelist[index];}

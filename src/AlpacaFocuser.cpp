@@ -2,9 +2,9 @@
 
 uint8_t AlpacaFocuser::_n_focusers = 0;
 
-void AlpacaFocuser::registerCallbacks()
+void AlpacaFocuser::registerCallbacks(AlpacaServer &alpaca_server)
 {
-    AlpacaDevice::registerCallbacks();
+    AlpacaDevice::registerCallbacks(alpaca_server);
     this->createCallBack(LHF(getAbsolute), HTTP_GET, "absolute");
     this->createCallBack(LHF(getIsMoving), HTTP_GET, "ismoving");
     this->createCallBack(LHF(getMaxIncrement), HTTP_GET, "maxincrement");
@@ -53,5 +53,5 @@ void AlpacaFocuser::putHalt(){
 
 }
 void AlpacaFocuser::putMove(){
-    
+
 }

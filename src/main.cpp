@@ -11,6 +11,7 @@ WiFiClient tcpClient;
 MsgBuffer tcpMsgBuffer("TCP/IP");
 MsgBuffer usbMsgBuffer("USB Serial");
 
+AlpacaServer alpacaServer("AstroFocus");
 //Focuser focuser2 = Focuser(&STP2_SERIAL, STP2_RX, STP2_TX, STP2_STEP, STP2_DIR, STP2_EN, PIN_HOME2);
 
 void setup() {
@@ -20,12 +21,12 @@ void setup() {
   setup_wifi();
 
   // setup ASCOM Alpaca server
-  setup_alpaca(ALPACA_UDP_PORT, ALPACA_TCP_PORT);
+  alpacaServer.begin(ALPACA_UDP_PORT, ALPACA_TCP_PORT);
 
   // setup focuser
   for(uint8_t i=0; i<N_FOCUSERS; i++) {
     focuser[i].begin();
-    focuser[i].registerCallbacks();
+    focuser[i].registerCallbacks(alpacaServer);
   }
 
   setup_encoder();
@@ -36,7 +37,7 @@ void setup() {
 }
 
 void loop() {
-  update_alpaca();
+  alpacaServer.update();
   update_serial();
   update_tcpip();
   update_encoder();

@@ -1,34 +1,43 @@
 #include "AlpacaServer.h"
 
-AsyncUDP  alpacaUDP;
-WebServer alpacaTCP;
-int alpacaServerTransactionID = 0;
-char uid[12];
+AlpacaServer::AlpacaServer(const char* name)
+{
+    // Get unique ID from wifi macadr.
+    uint8_t mac_adr[6];
+    esp_read_mac(mac_adr, ESP_MAC_WIFI_STA);
+    sprintf(_uid, "{%X%X%X%X%X%X}", mac_adr[0], mac_adr[1], mac_adr[2],mac_adr[3],mac_adr[4],mac_adr[5]);
 
-void setup_alpaca(uint16_t udp_port, uint16_t tcp_port)
+    // save name
+    strcpy(_name, name);
+}
+
+void AlpacaServer::begin(uint16_t udp_port, uint16_t tcp_port)
 {
     // setup ports
+    _portUDP = udp_port;
+    _portTCP = tcp_port;
+
     Serial.print("# Ascom Alpaca discovery port (UDP): ");
-    Serial.println(udp_port);
-    alpacaUDP.listen(udp_port);
-    alpacaUDP.onPacket(onAlpacaDiscovery);    
+    Serial.println(_portUDP);
+    _serverUDP.listen(_portUDP);
+    _serverUDP.onPacket([this](AsyncUDPPacket& udpPacket) { this->onAlpacaDiscovery(udpPacket);});    
 
     Serial.print("# Ascom Alpaca server port (TCP): ");
-    Serial.println(tcp_port);
-    alpacaTCP.begin(tcp_port);
+    Serial.println(_portTCP);
+    _serverTCP.begin(_portTCP);
 
-    alpacaTCP.onNotFound([]() {
-        String url = alpacaTCP.uri();
-        alpacaTCP.send(200, "text/plain", "Not found: '" + url + "'");
+    _serverTCP.onNotFound([this]() {
+        String url = this->_serverTCP.uri();
+        this->_serverTCP.send(200, "text/plain", "Not found: '" + url + "'");
     });
 }
 
-void update_alpaca()
+void AlpacaServer::update()
 {
-    alpacaTCP.handleClient();
+    _serverTCP.handleClient();
 }
 
-void onAlpacaDiscovery(AsyncUDPPacket& udpPacket)
+void AlpacaServer::onAlpacaDiscovery(AsyncUDPPacket& udpPacket)
 {
     // check for arrived UDP packet at port
     int length = udpPacket.length();
@@ -58,12 +67,5 @@ void onAlpacaDiscovery(AsyncUDPPacket& udpPacket)
     // reply port to ascom tcp server
     uint8_t resp_buf[24];
     int resp_len = sprintf((char *)resp_buf, "{\"alpacaport\":%d}", ALPACA_TCP_PORT);
-    alpacaUDP.writeTo(resp_buf, resp_len, udpPacket.remoteIP(), udpPacket.remotePort());
-}
-
-void genUID()
-{
-    uint8_t mac_adr[6];
-    esp_read_mac(mac_adr, ESP_MAC_WIFI_STA);
-    sprintf(uid, "{%X%X%X%X%X%X}", mac_adr[0], mac_adr[1], mac_adr[2],mac_adr[3],mac_adr[4],mac_adr[5]);
+    _serverUDP.writeTo(resp_buf, resp_len, udpPacket.remoteIP(), udpPacket.remotePort());
 }
