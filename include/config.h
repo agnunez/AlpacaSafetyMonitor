@@ -7,7 +7,7 @@
 #define N_FOCUSERS          1
 #define COEFF_RANGE         1000 // temp coeff in um/C
 #define HOMING_SPEED        1.0f
-//#define DEBUG
+#define DEBUG
 
 // TMC2208
 #define TMC_RS              0.11f   // Rs of Fysetc TMC2208 is 0.11 Ohm
@@ -34,3 +34,8 @@
 #define DRD_TIMEOUT          10
 #define DRD_ADDRESS          0
 #define ESP_DRD_USE_SPIFFS   true
+
+// ASCOM Alpaca
+#define ALPACA_UDP_PORT     32227
+#define ALPACA_UDP_JSON     256
+#define ALPACA_TCP_PORT     80

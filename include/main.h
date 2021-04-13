@@ -16,12 +16,14 @@
 
 #include "focuser.h"
 #include "msgbuffer.h"
+#include "alpaca.h"
 
 // 
 bool encA, encB;
 volatile int32_t enc_counter = 0;
 DeviceAddress temp_address;
 float temperature;
+bool tcpConnected = false;
 
 // module setup
 void setup_wifi();

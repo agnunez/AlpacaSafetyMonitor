@@ -4,12 +4,13 @@
 #include <FastAccelStepper.h>
 #include "config.h"
 #include "messages.h"
+#include "alpaca.h"
 
 struct FocuserConfig {
 
 };
 
-class Focuser {
+class Focuser : public AlpacaFocuser {
     private:
         static FastAccelStepperEngine _engine;
         static bool _engine_init;
@@ -53,7 +54,8 @@ class Focuser {
 
     public:
         Focuser(HardwareSerial *serialport, uint8_t pin_rx, uint8_t pin_tx, uint8_t pin_step, uint8_t _pin_dir, uint8_t pin_en, uint8_t pin_home)
-            : _serialport(serialport)
+            : AlpacaFocuser()
+            , _serialport(serialport)
             , _pin_rx(pin_rx)
             , _pin_tx(pin_tx)
             , _pin_step(pin_step)

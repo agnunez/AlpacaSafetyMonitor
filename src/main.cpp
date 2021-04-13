@@ -19,10 +19,14 @@ void setup() {
 
   setup_wifi();
 
+  // setup ASCOM Alpaca server
+  setup_alpaca(ALPACA_UDP_PORT, ALPACA_TCP_PORT);
+
   // setup focuser
-  for(uint8_t i=0; i<N_FOCUSERS; i++)
+  for(uint8_t i=0; i<N_FOCUSERS; i++) {
     focuser[i].begin();
-  //focuser2.begin();
+    focuser[i].registerCallbacks();
+  }
 
   setup_encoder();
   setup_sensors();
@@ -32,20 +36,13 @@ void setup() {
 }
 
 void loop() {
+  update_alpaca();
   update_serial();
   update_tcpip();
   update_encoder();
   update_sensors();
   update_focus();
-  delay(50);
-
-  // Serial.print("# Temp: ");
-  // Serial.print(temperature,1);
-  // Serial.print(" Target: ");
-  // Serial.print(focuser1.getTarget());
-  // Serial.print(" Current: ");
-  // Serial.print(focuser1.getPosition());
-  // Serial.print("    \r");
+  delay(50); 
 }
 
 void setup_wifi()
@@ -59,7 +56,7 @@ void setup_wifi()
   ESP_WiFiManager ESP_wifiManager(HOSTNAME);
   ESP_wifiManager.setConnectTimeout(60);
 
-  if (ESP_wifiManager.WiFi_SSID() == "" || drd.detectDoubleReset()) {
+  if (ESP_wifiManager.WiFi_SSID() == "") { // || drd.detectDoubleReset()) {
     Serial.println(F("# Starting Config Portal"));
     digitalWrite(PIN_WIFI_LED, HIGH);
     if (!ESP_wifiManager.startConfigPortal()) {
@@ -85,7 +82,6 @@ void setup_wifi()
     }
   }
 }
-
 
 void setup_encoder()
 {
@@ -143,9 +139,14 @@ void update_tcpip()
   // if not connected, check for incomming connection
   if (!tcpClient.connected())
   {
+    if(tcpConnected) {
+      Serial.println("# Client disconnected");
+      tcpConnected = false;
+    }
     tcpClient = tcpServer.available();    
     if (tcpClient.connected()) {
       // send welcome
+      tcpConnected = true;
       printConnect(tcpClient);
       Serial.print("# Client connected from ");
       Serial.print(tcpClient.remoteIP());
@@ -189,7 +190,7 @@ void parseCommand(Stream& stream, msg_t msg)
   //  [1] register
   //    P = current position / set position(RW)
   //    M = move to / target (RW)
-  //    R = temperature (R)
+  //    T = temperature (R)
   //    Z = zero / is zeroed (RW)
   //    H = is moving / stop (RW)
   //    C = temp compensation (RW)
@@ -197,15 +198,15 @@ void parseCommand(Stream& stream, msg_t msg)
   //    E = end of travel (RW)
   //    R = resolution (steps per um)
   //    
-  //  [2] device # (1 or 2, * for n/a)
-  //  [3] ':'
-  //  [4:] argument (only for some writes)
+  //  [2] 0-9 device # (1 or 2, * for n/a)
+  //  [3] ':' only if follower by argument
+  //  [4:] bool/int/float as string argument (only for some writes)
+  //  [-1] ';' last byte, end of command
   //
   // examples:
-  //    $M1:12345
-  //    %P1:
-  //    %T1:
-  //    %T1
+  //    $M1:12345;
+  //    %P1;
+  //    %T1;
 
 #ifdef DEBUG
   uint32_t t_start = micros();
