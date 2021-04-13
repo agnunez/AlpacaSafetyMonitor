@@ -16,7 +16,7 @@
 
 #include "focuser.h"
 #include "msgbuffer.h"
-#include "alpaca.h"
+#include "AlpacaServer.h"
 
 // 
 bool encA, encB;

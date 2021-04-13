@@ -4,7 +4,7 @@
 #include <FastAccelStepper.h>
 #include "config.h"
 #include "messages.h"
-#include "alpaca.h"
+#include "AlpacaFocuser.h"
 
 struct FocuserConfig {
 
