@@ -1,83 +1,95 @@
 #include "AlpacaDevice.h"
 
-uint8_t AlpacaDevice::_n_devices = 0;
-void AlpacaDevice::createCallBack(WebServer::THandlerFunction fn, http_method type, const char command[])
+void AlpacaDevice::createCallBack(WebServer::THandlerFunction fn, http_method type, const char command[], bool devicemethod)
 {
     char url[64];
-    sprintf(url, ALPACA_DEVICE_COMMAND, _device_type, _index, command);
+    sprintf(url, ALPACA_DEVICE_COMMAND, _device_type, _device_number, command);
     Serial.print("# Register handler for \"");
     Serial.print(url);
     Serial.print("\" to ");
     Serial.println(command);
+    
     // register handler for generated URI
-    _alpacaTCP->on(url, type, fn);
+    _alpacaServer->getTCPServer()->on(url, type, fn);
+
+    // add to supported methods if devicemethod is true
+    if(devicemethod) {
+        int len = strlen(_supported_actions);
+        _supported_actions[len-1] = '\0';
+        if (len >2)
+            strcat(_supported_actions, ", \"");
+        else
+            strcat(_supported_actions, "\"");
+        strcat(_supported_actions, command);
+        strcat(_supported_actions, "\"]");
+    }
 }
 
-void AlpacaDevice::registerCallbacks(AlpacaServer &alpaca_server)
+void AlpacaDevice::registerCallbacks()
 {
-    _alpacaTCP = alpaca_server.getTCPServer();
-    this->createCallBack(LHF(putAction), HTTP_PUT, "action");
-    this->createCallBack(LHF(putCommandBlind), HTTP_PUT, "commandblind");
-    this->createCallBack(LHF(putCommandBool), HTTP_PUT, "commandbool");
-    this->createCallBack(LHF(putCommandString), HTTP_PUT, "commandstring");
-    this->createCallBack(LHF(getConnected), HTTP_GET, "connected");
-    this->createCallBack(LHF(putConnected), HTTP_PUT, "connected");
-    this->createCallBack(LHF(getDescription), HTTP_GET, "description");
-    this->createCallBack(LHF(getDriverInfo), HTTP_GET, "driverinfo");
-    this->createCallBack(LHF(getDriverVersion), HTTP_GET, "driverversion");
-    this->createCallBack(LHF(getInterfaceVersion), HTTP_GET, "interfaceversion");
-    this->createCallBack(LHF(getName), HTTP_GET, "name");
-    this->createCallBack(LHF(getSupportedActions), HTTP_GET, "supportedactions");
+    this->createCallBack(LHF(putAction), HTTP_PUT, "action", false);
+    this->createCallBack(LHF(putCommandBlind), HTTP_PUT, "commandblind", false);
+    this->createCallBack(LHF(putCommandBool), HTTP_PUT, "commandbool", false);
+    this->createCallBack(LHF(putCommandString), HTTP_PUT, "commandstring", false);
+    this->createCallBack(LHF(getConnected), HTTP_GET, "connected", false);
+    this->createCallBack(LHF(putConnected), HTTP_PUT, "connected", false);
+    this->createCallBack(LHF(getDescription), HTTP_GET, "description", false);
+    this->createCallBack(LHF(getDriverInfo), HTTP_GET, "driverinfo", false);
+    this->createCallBack(LHF(getDriverVersion), HTTP_GET, "driverversion", false);
+    this->createCallBack(LHF(getInterfaceVersion), HTTP_GET, "interfaceversion", false);
+    this->createCallBack(LHF(getName), HTTP_GET, "name", false);
+    this->createCallBack(LHF(getSupportedActions), HTTP_GET, "supportedactions", false);
 }
 
-void AlpacaDevice::getClientArgs() {
-    String str;
-    str = _alpacaTCP->arg("clientid");
-    if (str.length() > 0) {
-        int clientid = str.toInt();
+const char*  AlpacaDevice::getDeviceName() {
+    if(strcmp(_device_name, "") == 0) {
+        sprintf(_device_name, ALPACA_DEFAULT_NAME, _device_type, _device_number);
     }
-    str = _alpacaTCP->arg("clienttransactionid");
-    if (str.length() > 0) {
-        int transactionid = str.toInt();
+    return _device_name;
+}
+const char*  AlpacaDevice::getDeviceUID() {
+    if(strcmp(_device_uid, "") == 0) {
+        sprintf(_device_uid, ALPACA_UNIQUE_NAME, _device_type, _alpacaServer->getUID(), _device_number);
     }
+    return _device_uid;
 }
 
 // alpaca commands
 void AlpacaDevice::putAction()
 {
-    _alpacaTCP->send(200, "text/plain", "Action");
+    _alpacaServer->respond(nullptr, "", NotImplemented);
 };
 void AlpacaDevice::putCommandBlind()
 {
-    _alpacaTCP->send(200, "text/plain", "CommandBlind");
+    _alpacaServer->respond(nullptr, "", NotImplemented);
 };
 void AlpacaDevice::putCommandBool(){
-    _alpacaTCP->send(200, "text/plain", "CommandBool");
+    _alpacaServer->respond(nullptr, "", NotImplemented);
 };
 void AlpacaDevice::putCommandString(){
-    _alpacaTCP->send(200, "text/plain", "CommandString");
+    _alpacaServer->respond(nullptr, "", NotImplemented);
 };
 void AlpacaDevice::getConnected(){
-    _alpacaTCP->send(200, "text/plain", "Connected");
+    _alpacaServer->respond("1", nullptr);
 };
 void AlpacaDevice::putConnected(){
-
+    _alpacaServer->respond(nullptr, nullptr);
 };
 void AlpacaDevice::getDescription(){
-    _alpacaTCP->send(200, "text/plain", "Description");
+    _alpacaServer->respond(ALPACA_DRIVER_DESC, nullptr);
 };
 void AlpacaDevice::getDriverInfo(){
-    _alpacaTCP->send(200, "text/plain", "DriverInfo");
+    _alpacaServer->respond(ALPACA_DRIVER_INFO, nullptr);
 };
 void AlpacaDevice::getDriverVersion(){
-    _alpacaTCP->send(200, "text/plain", "DriverVersion");
+    _alpacaServer->respond(ALPACA_DRIVER_VER, nullptr);
 };
 void AlpacaDevice::getInterfaceVersion(){
-    _alpacaTCP->send(200, "text/plain", "InterfaceVersion");
+    _alpacaServer->respond(ALPACA_INTERFACE_VERSION, nullptr);
 };
 void AlpacaDevice::getName(){
-    _alpacaTCP->send(200, "text/plain", "astrofocuser[0]");
+    _alpacaServer->respond(getDeviceName(), nullptr);
 };
 void AlpacaDevice::getSupportedActions(){
-    _alpacaTCP->send(200, "text/plain", "SupportedActions");
+    _alpacaServer->respond(_supported_actions, nullptr);
 };

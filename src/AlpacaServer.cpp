@@ -1,11 +1,12 @@
 #include "AlpacaServer.h"
+#include "AlpacaDevice.h"
 
 AlpacaServer::AlpacaServer(const char* name)
 {
     // Get unique ID from wifi macadr.
     uint8_t mac_adr[6];
     esp_read_mac(mac_adr, ESP_MAC_WIFI_STA);
-    sprintf(_uid, "{%X%X%X%X%X%X}", mac_adr[0], mac_adr[1], mac_adr[2],mac_adr[3],mac_adr[4],mac_adr[5]);
+    sprintf(_uid, "%02X%02X%02X%02X%02X%02X", mac_adr[0], mac_adr[1], mac_adr[2],mac_adr[3],mac_adr[4],mac_adr[5]);
 
     // save name
     strcpy(_name, name);
@@ -28,13 +29,135 @@ void AlpacaServer::begin(uint16_t udp_port, uint16_t tcp_port)
 
     _serverTCP.onNotFound([this]() {
         String url = this->_serverTCP.uri();
-        this->_serverTCP.send(200, "text/plain", "Not found: '" + url + "'");
+        this->_serverTCP.send(400, "text/plain", "Not found: '" + url + "'");
     });
+    
+    registerCallbacks();
+}
+
+void AlpacaServer::addDevice(AlpacaDevice *device)
+{
+    if(_n_devices == ALPACA_MAX_DEVICES) {
+        Serial.println("# ERROR - max alpaca devices exceeded");
+        return;
+    }
+
+    // get device_number for device_type
+    int device_number = 0;
+    const char* device_type = device->getDeviceType();
+    // loop through registered devices and count
+    for(int i=0;i<_n_devices;i++){
+        if(strcmp(_device[i]->getDeviceType(), device_type) == 0) {
+            device_number++;
+        }
+    }
+    // and set device number
+    _device[_n_devices++] = device;
+    device->setDeviceNumber(device_number);
+    device->setAlpacaServer(this);
+    device->registerCallbacks();
+}
+
+
+void AlpacaServer::registerCallbacks()
+{
+    Serial.println(F("# Register handler for \"/management/apiversions\" to getApiVersions"));
+    _serverTCP.on("/management/apiversions", HTTP_GET, LHF(getApiVersions));
+    Serial.println(F("# Register handler for \"/management/v1/description\" to getDescription"));
+    _serverTCP.on("/management/v1/description", HTTP_GET, LHF(getDescription));
+    Serial.println(F("# Register handler for \"/management/v1/configureddevices\" to getConfiguredDevices"));
+    _serverTCP.on("/management/v1/configureddevices", HTTP_GET, LHF(getConfiguredDevices));
+}
+
+void AlpacaServer::getApiVersions(){
+    respond(ALPACA_API_VERSIONS, "");
+}
+void AlpacaServer::getDescription(){
+    respond(ALPACA_DESCRIPTION, "");
+    //_serverTCP.send(200,"text/plain", ALPACA_DESCRIPTION);
+}
+void AlpacaServer::getConfiguredDevices(){
+    char value[ALPACA_MAX_DEVICES*256] = "";
+    char deviceinfo[256];
+    strcat(value, "[");
+    for(int i=0; i<_n_devices; i++) {
+        sprintf(
+            deviceinfo,
+            ALPACA_DEVICE_LIST,
+            _device[i]->getDeviceName(),
+            _device[i]->getDeviceType(),
+            _device[i]->getDeviceNumber(),
+            _device[i]->getDeviceUID()
+        );
+        strcat(value, deviceinfo);
+        if(i<_n_devices-1)
+            strcat(value, ","); // add comma to all but last device
+    }
+    strcat(value, "]");
+    respond(value, "");
 }
 
 void AlpacaServer::update()
 {
     _serverTCP.handleClient();
+}
+
+void AlpacaServer::getTransactionData()
+{
+    _clientID = 0;
+    _clientTransactionID = 0;
+    for(int i=0; i< _serverTCP.args(); i++) {
+        if (_serverTCP.argName(i).equalsIgnoreCase("clienttransactionid")) {
+            _clientTransactionID = _serverTCP.arg(i).toInt();
+        }
+        else if (_serverTCP.argName(i).equalsIgnoreCase("clientid")) {
+            _clientID = _serverTCP.arg(i).toInt();
+        }
+    }
+    _serverTransactionID++;
+}
+
+void AlpacaServer::respond(bool value, const char* error_message, int32_t error_number) {
+    const char* str_val = (value?"1":"0");
+    respond(str_val, error_message, error_number);
+}
+void AlpacaServer::respond(int32_t value, const char* error_message, int32_t error_number) {
+    char str_val[16];
+    sprintf(str_val, "%i", value);
+    respond(str_val, error_message, error_number);
+}
+void AlpacaServer::respond(uint32_t value, const char* error_message, int32_t error_number) {
+    char str_val[16];
+    sprintf(str_val, "%i", value);
+    respond(str_val, error_message, error_number);
+}
+void AlpacaServer::respond(float value, const char* error_message, int32_t error_number) {
+    char str_val[16];
+    sprintf(str_val, "%0.5f", value);
+    respond(str_val, error_message, error_number);
+}
+
+// repsond with value and error
+void AlpacaServer::respond(const char* value, const char* error_message, int32_t error_number)
+{
+    char response[2048];
+
+    if( value == nullptr) {
+        sprintf(response,ALPACA_RESPOSE_ERROR, _clientTransactionID, _serverTransactionID, error_number, error_message);
+    } else {
+        if ((value[0] >= '0' && value[0] <= '9') || value[0] == '[' || value[0] == '{' || value[0] == '"') {
+            sprintf(response,ALPACA_RESPOSE_VALUE_ERROR, value, _clientTransactionID, _serverTransactionID, error_number, error_message);
+        } else {
+            sprintf(response,ALPACA_RESPOSE_VALUE_ERROR_STR, value, _clientTransactionID, _serverTransactionID, error_number, error_message);
+        }
+    }
+    
+    _serverTCP.send(200, ALPACA_JSON_TYPE, response);
+    Serial.print("# Alpaca (");
+    Serial.print(_serverTCP.client().remoteIP());
+    Serial.print(") ");
+    Serial.println(_serverTCP.uri());
+    Serial.println(response);
 }
 
 void AlpacaServer::onAlpacaDiscovery(AsyncUDPPacket& udpPacket)
@@ -48,7 +171,7 @@ void AlpacaServer::onAlpacaDiscovery(AsyncUDPPacket& udpPacket)
     Serial.println(udpPacket.remoteIP());
 
     // check size
-    if (length != sizeof(AlpacaDiscoveryPacket)) {
+    if (length < 16) {
         Serial.print(F("# Alpaca Discovery - Wrong packet size "));
         Serial.println(length);
         return;

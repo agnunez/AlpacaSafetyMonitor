@@ -26,7 +26,7 @@ void setup() {
   // setup focuser
   for(uint8_t i=0; i<N_FOCUSERS; i++) {
     focuser[i].begin();
-    focuser[i].registerCallbacks(alpacaServer);
+    alpacaServer.addDevice(&focuser[i]);
   }
 
   setup_encoder();
@@ -53,7 +53,7 @@ void setup_wifi()
   // setup wifi
   Serial.print(F("\n# Starting WiFi"));
 
-  DoubleResetDetector drd = DoubleResetDetector(DRD_TIMEOUT, DRD_ADDRESS);
+  //DoubleResetDetector drd = DoubleResetDetector(DRD_TIMEOUT, DRD_ADDRESS);
   ESP_WiFiManager ESP_wifiManager(HOSTNAME);
   ESP_wifiManager.setConnectTimeout(60);
 

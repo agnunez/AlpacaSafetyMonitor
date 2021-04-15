@@ -1,21 +1,20 @@
 #pragma once
 #include "AlpacaServer.h"
 
-// Lambda Handler Function for calling object function
-#define LHF(method) [this](){this->method();}
-
 class AlpacaDevice
 {
     protected:
         // pointer to server
-        WebServer* _alpacaTCP;
+        AlpacaServer* _alpacaServer;
         // naming and numbering
-        static AlpacaDevice* _devicelist[16];
-        static uint8_t _n_devices;
-        uint8_t _index;
-        char _device_type[16] = "";
-        uint8_t _device_number;
-        void createCallBack(WebServer::THandlerFunction fn, http_method type, const char command[]);
+        char _device_name[33] = "";
+        char _device_type[17] = "";
+        char _device_uid[17] = "";
+        char _supported_actions[512] = "[]";
+        int8_t _device_number = -1;
+
+        // common functions
+        void createCallBack(WebServer::THandlerFunction fn, http_method type, const char command[], bool deviceMethod=true);
         void getClientArgs();
 
         // alpaca commands
@@ -31,14 +30,13 @@ class AlpacaDevice
         void getInterfaceVersion();
         void getName();
         void getSupportedActions();
-        AlpacaDevice()
-        {
-            _index = _n_devices;
-            //_devicelist[_n_devices++] = this;
-        }
-        public:
-        void registerCallbacks(AlpacaServer &alpaca_server);
+    public:
+        void virtual registerCallbacks();
+        void setAlpacaServer(AlpacaServer *alpaca_server) { _alpacaServer = alpaca_server; }
+        void setDeviceNumber( int8_t device_number) { _device_number = device_number; }
         uint8_t getDeviceNumber() { return _device_number; }
         const char* getDeviceType() { return _device_type; }
+        const char* getDeviceName();
+        const char* getDeviceUID();
         //static AlpacaDevice* getDevice(int index) { return _devicelist[index];}
 };

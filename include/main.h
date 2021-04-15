@@ -18,6 +18,8 @@
 #include "msgbuffer.h"
 #include "AlpacaServer.h"
 
+#define PROGRAM_VERSION "1.0.0"
+
 // 
 bool encA, encB;
 volatile int32_t enc_counter = 0;
