@@ -17,39 +17,6 @@ void AlpacaFocuser::registerCallbacks()
     this->createCallBack(LHF(aPutMove), HTTP_PUT, "move");
 }
 
-// void AlpacaFocuser::getAbsolute(){
-
-// }
-// void AlpacaFocuser::getIsMoving(){
-
-// }
-// void AlpacaFocuser::getMaxIncrement(){
-
-// }
-// void AlpacaFocuser::getMaxStep(){
-
-// }
-// void AlpacaFocuser::getPosition(){
-
-// }
-// void AlpacaFocuser::getStepSize(){
-
-// }
-// void AlpacaFocuser::getTempComp(){
-
-// }
-// void AlpacaFocuser::putTempComp(){
-
-// }
-// void AlpacaFocuser::getTempCompAvailable(){
-
-// }
-// void AlpacaFocuser::getTemperature(){
-
-// }
-// void AlpacaFocuser::putHalt(){
-
-// }
-// void AlpacaFocuser::putMove(){
-
-// }
+void AlpacaFocuser::aGetInterfaceVersion() {
+    _alpacaServer->respond(ALPACA_FOCUSER_INTERFACE_VERSION);
+};

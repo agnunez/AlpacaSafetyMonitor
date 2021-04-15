@@ -25,22 +25,6 @@ void AlpacaDevice::createCallBack(WebServer::THandlerFunction fn, http_method ty
     }
 }
 
-void AlpacaDevice::registerCallbacks()
-{
-    this->createCallBack(LHF(putAction), HTTP_PUT, "action", false);
-    this->createCallBack(LHF(putCommandBlind), HTTP_PUT, "commandblind", false);
-    this->createCallBack(LHF(putCommandBool), HTTP_PUT, "commandbool", false);
-    this->createCallBack(LHF(putCommandString), HTTP_PUT, "commandstring", false);
-    this->createCallBack(LHF(getConnected), HTTP_GET, "connected", false);
-    this->createCallBack(LHF(putConnected), HTTP_PUT, "connected", false);
-    this->createCallBack(LHF(getDescription), HTTP_GET, "description", false);
-    this->createCallBack(LHF(getDriverInfo), HTTP_GET, "driverinfo", false);
-    this->createCallBack(LHF(getDriverVersion), HTTP_GET, "driverversion", false);
-    this->createCallBack(LHF(getInterfaceVersion), HTTP_GET, "interfaceversion", false);
-    this->createCallBack(LHF(getName), HTTP_GET, "name", false);
-    this->createCallBack(LHF(getSupportedActions), HTTP_GET, "supportedactions", false);
-}
-
 const char*  AlpacaDevice::getDeviceName() {
     if(strcmp(_device_name, "") == 0) {
         sprintf(_device_name, ALPACA_DEFAULT_NAME, _device_type, _device_number);
@@ -54,42 +38,55 @@ const char*  AlpacaDevice::getDeviceUID() {
     return _device_uid;
 }
 
+void AlpacaDevice::registerCallbacks()
+{
+    this->createCallBack(LHF(aPutAction), HTTP_PUT, "action", false);
+    this->createCallBack(LHF(aPutCommandBlind), HTTP_PUT, "commandblind", false);
+    this->createCallBack(LHF(aPutCommandBool), HTTP_PUT, "commandbool", false);
+    this->createCallBack(LHF(aPutCommandString), HTTP_PUT, "commandstring", false);
+    this->createCallBack(LHF(aGetConnected), HTTP_GET, "connected", false);
+    this->createCallBack(LHF(aPutConnected), HTTP_PUT, "connected", false);
+    this->createCallBack(LHF(aGetDescription), HTTP_GET, "description", false);
+    this->createCallBack(LHF(aGetDriverInfo), HTTP_GET, "driverinfo", false);
+    this->createCallBack(LHF(aGetDriverVersion), HTTP_GET, "driverversion", false);
+    this->createCallBack(LHF(aGetInterfaceVersion), HTTP_GET, "interfaceversion", false);
+    this->createCallBack(LHF(aGetName), HTTP_GET, "name", false);
+    this->createCallBack(LHF(aGetSupportedActions), HTTP_GET, "supportedactions", false);
+}
+
 // alpaca commands
-void AlpacaDevice::putAction()
+void AlpacaDevice::aPutAction()
 {
-    _alpacaServer->respond(nullptr, "", NotImplemented);
+    _alpacaServer->respond(nullptr, NotImplemented);
 };
-void AlpacaDevice::putCommandBlind()
+void AlpacaDevice::aPutCommandBlind()
 {
-    _alpacaServer->respond(nullptr, "", NotImplemented);
+    _alpacaServer->respond(nullptr, NotImplemented);
 };
-void AlpacaDevice::putCommandBool(){
-    _alpacaServer->respond(nullptr, "", NotImplemented);
+void AlpacaDevice::aPutCommandBool(){
+    _alpacaServer->respond(nullptr, NotImplemented);
 };
-void AlpacaDevice::putCommandString(){
-    _alpacaServer->respond(nullptr, "", NotImplemented);
+void AlpacaDevice::aPutCommandString(){
+    _alpacaServer->respond(nullptr, NotImplemented);
 };
-void AlpacaDevice::getConnected(){
-    _alpacaServer->respond("1", nullptr);
+void AlpacaDevice::aGetConnected(){
+    _alpacaServer->respond("1");
 };
-void AlpacaDevice::putConnected(){
-    _alpacaServer->respond(nullptr, nullptr);
+void AlpacaDevice::aPutConnected(){
+    _alpacaServer->respond(nullptr);
 };
-void AlpacaDevice::getDescription(){
-    _alpacaServer->respond(ALPACA_DRIVER_DESC, nullptr);
+void AlpacaDevice::aGetDescription(){
+    _alpacaServer->respond(_device_desc);
 };
-void AlpacaDevice::getDriverInfo(){
-    _alpacaServer->respond(ALPACA_DRIVER_INFO, nullptr);
+void AlpacaDevice::aGetDriverInfo(){
+    _alpacaServer->respond(ALPACA_DRIVER_INFO);
 };
-void AlpacaDevice::getDriverVersion(){
-    _alpacaServer->respond(ALPACA_DRIVER_VER, nullptr);
+void AlpacaDevice::aGetDriverVersion(){
+    _alpacaServer->respond(ALPACA_DRIVER_VER);
 };
-void AlpacaDevice::getInterfaceVersion(){
-    _alpacaServer->respond(ALPACA_INTERFACE_VERSION, nullptr);
+void AlpacaDevice::aGetName(){
+    _alpacaServer->respond(getDeviceName());
 };
-void AlpacaDevice::getName(){
-    _alpacaServer->respond(getDeviceName(), nullptr);
-};
-void AlpacaDevice::getSupportedActions(){
-    _alpacaServer->respond(_supported_actions, nullptr);
+void AlpacaDevice::aGetSupportedActions(){
+    _alpacaServer->respond(_supported_actions);
 };

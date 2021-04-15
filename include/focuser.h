@@ -72,18 +72,21 @@ class Focuser : public AlpacaFocuser {
         void stepInc() { _pos_target = constrain(_pos_target+1, _pos_min, _pos_max);}
         void stepDec() { _pos_target = constrain(_pos_target-1, _pos_min, _pos_max);}
 
-        void aGetAbsolute() { _alpacaServer->respond(1,""); }
-        void aGetIsMoving() { _alpacaServer->respond(_stepper->isRunning(),""); }
-        void aGetMaxIncrement() { _alpacaServer->respond(_pos_max, ""); }
-        void aGetMaxStep() { _alpacaServer->respond(_pos_max, ""); }
-        void aGetPosition() { _alpacaServer->respond(_stepper->getCurrentPosition(), ""); }
-        void aGetStepSize() { _alpacaServer->respond(_steps_per_mm, ""); }
-        void aGetTempComp() { _alpacaServer->respond(_temp_comp, ""); }
-        void aPutTempComp() { _alpacaServer->respond(nullptr, ""); }
-        void aGetTempCompAvailable() { _alpacaServer->respond(1, ""); }
-        void aGetTemperature() { _alpacaServer->respond(_temp_meas, ""); }
-        void aPutHalt() { _alpacaServer->respond(nullptr, ""); }
-        void aPutMove() { _alpacaServer->respond(nullptr, ""); }
+        // alpaca getters
+        void aGetAbsolute()             { _alpacaServer->respond(1); }
+        void aGetIsMoving()             { _alpacaServer->respond(_stepper->isRunning()); }
+        void aGetMaxIncrement()         { _alpacaServer->respond(_pos_max); }
+        void aGetMaxStep()              { _alpacaServer->respond(_pos_max); }
+        void aGetPosition()             { _alpacaServer->respond(_stepper->getCurrentPosition()); }
+        void aGetStepSize()             { _alpacaServer->respond(_steps_per_mm/1000); }
+        void aGetTempComp()             { _alpacaServer->respond(_temp_comp); }
+        void aGetTempCompAvailable()    { _alpacaServer->respond(1); }
+        void aGetTemperature()          { _alpacaServer->respond(_temp_meas); }
+
+        // alpaca setters
+        void aPutTempComp()             { _alpacaServer->getParam("TempComp", _temp_comp); _alpacaServer->respond(nullptr); }
+        void aPutHalt()                 { stop(); _alpacaServer->respond(nullptr); }
+        void aPutMove()                 { _alpacaServer->getParam("Position", _pos_target); _alpacaServer->respond(nullptr); }
 
 
         float getTemperature() { return _temp_meas; }

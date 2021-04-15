@@ -32,7 +32,7 @@ void AlpacaServer::begin(uint16_t udp_port, uint16_t tcp_port)
         this->_serverTCP.send(400, "text/plain", "Not found: '" + url + "'");
     });
     
-    registerCallbacks();
+    _registerCallbacks();
 }
 
 void AlpacaServer::addDevice(AlpacaDevice *device)
@@ -59,24 +59,24 @@ void AlpacaServer::addDevice(AlpacaDevice *device)
 }
 
 
-void AlpacaServer::registerCallbacks()
+void AlpacaServer::_registerCallbacks()
 {
     Serial.println(F("# Register handler for \"/management/apiversions\" to getApiVersions"));
-    _serverTCP.on("/management/apiversions", HTTP_GET, LHF(getApiVersions));
+    _serverTCP.on("/management/apiversions", HTTP_GET, LHF(_getApiVersions));
     Serial.println(F("# Register handler for \"/management/v1/description\" to getDescription"));
-    _serverTCP.on("/management/v1/description", HTTP_GET, LHF(getDescription));
+    _serverTCP.on("/management/v1/description", HTTP_GET, LHF(_getDescription));
     Serial.println(F("# Register handler for \"/management/v1/configureddevices\" to getConfiguredDevices"));
-    _serverTCP.on("/management/v1/configureddevices", HTTP_GET, LHF(getConfiguredDevices));
+    _serverTCP.on("/management/v1/configureddevices", HTTP_GET, LHF(_getConfiguredDevices));
 }
 
-void AlpacaServer::getApiVersions(){
-    respond(ALPACA_API_VERSIONS, "");
+void AlpacaServer::_getApiVersions(){
+    respond(ALPACA_API_VERSIONS);
 }
-void AlpacaServer::getDescription(){
-    respond(ALPACA_DESCRIPTION, "");
+void AlpacaServer::_getDescription(){
+    respond(ALPACA_DESCRIPTION);
     //_serverTCP.send(200,"text/plain", ALPACA_DESCRIPTION);
 }
-void AlpacaServer::getConfiguredDevices(){
+void AlpacaServer::_getConfiguredDevices(){
     char value[ALPACA_MAX_DEVICES*256] = "";
     char deviceinfo[256];
     strcat(value, "[");
@@ -94,7 +94,7 @@ void AlpacaServer::getConfiguredDevices(){
             strcat(value, ","); // add comma to all but last device
     }
     strcat(value, "]");
-    respond(value, "");
+    respond(value);
 }
 
 void AlpacaServer::update()
@@ -102,7 +102,7 @@ void AlpacaServer::update()
     _serverTCP.handleClient();
 }
 
-void AlpacaServer::getTransactionData()
+void AlpacaServer::_getTransactionData()
 {
     _clientID = 0;
     _clientTransactionID = 0;
@@ -117,31 +117,78 @@ void AlpacaServer::getTransactionData()
     _serverTransactionID++;
 }
 
-void AlpacaServer::respond(bool value, const char* error_message, int32_t error_number) {
+bool AlpacaServer::getParam(String name, bool &value){
+    String str_val;
+    if(getParam(name, str_val)) {
+        value = str_val.equalsIgnoreCase("True");
+        return true;
+    } else {
+        return false;
+    }
+}
+
+bool AlpacaServer::getParam(String name, float &value){
+    String str_val;
+    if(getParam(name, str_val)) {
+        value = str_val.toFloat();
+        return true;
+    } else {
+        return false;
+    }
+}
+
+bool AlpacaServer::getParam(String name, int &value){
+    String str_val;
+    if(getParam(name, str_val)) {
+        value = str_val.toInt();
+        return true;
+    } else {
+        return false;
+    }
+}
+
+bool AlpacaServer::getParam(String name, String &value)
+{
+    for(int i=0; i< _serverTCP.args(); i++) {
+        if (_serverTCP.argName(i).equalsIgnoreCase(name)) {
+            value = _serverTCP.arg(i);
+            return true;
+        }
+    }
+    return false;
+}
+
+void AlpacaServer::respond(bool value, int32_t error_number, const char* error_message)
+{
     const char* str_val = (value?"1":"0");
-    respond(str_val, error_message, error_number);
+    respond(str_val, error_number, error_message);
 }
-void AlpacaServer::respond(int32_t value, const char* error_message, int32_t error_number) {
+
+void AlpacaServer::respond(int32_t value, int32_t error_number, const char* error_message)
+{
     char str_val[16];
     sprintf(str_val, "%i", value);
-    respond(str_val, error_message, error_number);
+    respond(str_val, error_number, error_message);
 }
-void AlpacaServer::respond(uint32_t value, const char* error_message, int32_t error_number) {
-    char str_val[16];
-    sprintf(str_val, "%i", value);
-    respond(str_val, error_message, error_number);
-}
-void AlpacaServer::respond(float value, const char* error_message, int32_t error_number) {
+
+void AlpacaServer::respond(float value, int32_t error_number, const char* error_message)
+{
     char str_val[16];
     sprintf(str_val, "%0.5f", value);
-    respond(str_val, error_message, error_number);
+    respond(str_val, error_number, error_message);
 }
 
-// repsond with value and error
-void AlpacaServer::respond(const char* value, const char* error_message, int32_t error_number)
+void AlpacaServer::respond(const char* value, int32_t error_number, const char* error_message)
 {
-    char response[2048];
+    Serial.print("# Alpaca (");
+    Serial.print(_serverTCP.client().remoteIP());
+    Serial.print(") ");
+    Serial.println(_serverTCP.uri());
+ 
+    _getTransactionData();
 
+ 
+    char response[2048];
     if( value == nullptr) {
         sprintf(response,ALPACA_RESPOSE_ERROR, _clientTransactionID, _serverTransactionID, error_number, error_message);
     } else {
@@ -153,10 +200,6 @@ void AlpacaServer::respond(const char* value, const char* error_message, int32_t
     }
     
     _serverTCP.send(200, ALPACA_JSON_TYPE, response);
-    Serial.print("# Alpaca (");
-    Serial.print(_serverTCP.client().remoteIP());
-    Serial.print(") ");
-    Serial.println(_serverTCP.uri());
     Serial.println(response);
 }
 

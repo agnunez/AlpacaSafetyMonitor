@@ -28,22 +28,25 @@ class AlpacaServer
         AlpacaDevice*   _device[ALPACA_MAX_DEVICES];
         int             _n_devices = 0;
 
-        void registerCallbacks();
-        void getApiVersions();
-        void getDescription();
-        void getConfiguredDevices();
-        void getTransactionData();
+        void _registerCallbacks();
+        void _getApiVersions();
+        void _getDescription();
+        void _getConfiguredDevices();
+        void _getTransactionData();
 
     public:
         AlpacaServer(const char* name);
         void begin(uint16_t udp_port, uint16_t tcp_port);
         void update();
         void addDevice(AlpacaDevice *device);
-        void respond(bool value, const char* error_message, int32_t error_number=0);
-        void respond(int32_t value, const char* error_message, int32_t error_number=0);
-        void respond(uint32_t value, const char* error_message, int32_t error_number=0);
-        void respond(float value, const char* error_message, int32_t error_number=0);
-        void respond(const char* value, const char* error_message, int32_t error_number=0);
+        bool getParam(String name, bool &value);
+        bool getParam(String name, float &value);
+        bool getParam(String name, int &value);
+        bool getParam(String name, String &value);
+        void respond(bool value, int32_t error_number=0, const char* error_message="");
+        void respond(int value, int32_t error_number=0, const char* error_message="");
+        void respond(float value, int32_t error_number=0, const char* error_message="");
+        void respond(const char* value, int32_t error_number=0, const char* error_message="");
         void onAlpacaDiscovery(AsyncUDPPacket& udpPacket);
         const char* getUID() { return _uid; }
         WebServer* getTCPServer() { return &_serverTCP; }

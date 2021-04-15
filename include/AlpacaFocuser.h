@@ -5,6 +5,7 @@ class AlpacaFocuser : public AlpacaDevice
 {
     protected:
         // alpaca commands
+        void aGetInterfaceVersion();
         virtual void aGetAbsolute() = 0;
         virtual void aGetIsMoving() = 0;
         virtual void aGetMaxIncrement() = 0;
@@ -17,10 +18,7 @@ class AlpacaFocuser : public AlpacaDevice
         virtual void aGetTemperature() = 0;
         virtual void aPutHalt() = 0;
         virtual void aPutMove() = 0;
-        AlpacaFocuser()
-        {
-            strcpy(_device_type, "focuser");
-        }
+        AlpacaFocuser() {strcpy(_device_type, "focuser");}
     public:
         void registerCallbacks();
 };
