@@ -103,5 +103,4 @@ void Focuser::zero()
     // reset speed to normal after zeroing is done
     _zeroed = true;
     _stepper->setSpeedInUs(1000000/(_speed * _steps_per_mm));
-    Serial.println(msg_zeroing_done);
 }

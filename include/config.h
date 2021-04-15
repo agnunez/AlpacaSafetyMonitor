@@ -1,10 +1,9 @@
 #pragma once
 // General
-#define DEVICENAME          "YetAnotherFocuser"
+#define DEVICENAME          "ESP AstroFocuser"
 #define VERSION             "v1.0.0"
 #define COPYRIGHT           "2021 Njål Brekke"
-#define STEPPER2_ENABLE     false
-#define N_FOCUSERS          1
+#define FOCUSER2_ENABLE     true
 #define COEFF_RANGE         1000 // temp coeff in um/C
 #define HOMING_SPEED        1.0f
 #define DEBUG
@@ -28,7 +27,7 @@
 #define STP_STEPS_PER_MM   (200 * STP_MICROSTEP * STP_GEAR_RATIO / STP_MM_PER_REV)
 
 // WiFi config
-#define HOSTNAME             "astrofocus"
+#define HOSTNAME             "astrofocuser"
 #define TCP_PORT             3117
 #define ESP_DRD_USE_EEPROM   true
 #define DRD_TIMEOUT          10

@@ -1,6 +1,8 @@
 #include "AlpacaServer.h"
 #include "AlpacaDevice.h"
 
+#define DEBUGSTREAM if(debug) debugstream
+
 AlpacaServer::AlpacaServer(const char* name)
 {
     // Get unique ID from wifi macadr.
@@ -12,19 +14,20 @@ AlpacaServer::AlpacaServer(const char* name)
     strcpy(_name, name);
 }
 
+// initialize alpaca server
 void AlpacaServer::begin(uint16_t udp_port, uint16_t tcp_port)
 {
     // setup ports
     _portUDP = udp_port;
     _portTCP = tcp_port;
 
-    Serial.print("# Ascom Alpaca discovery port (UDP): ");
-    Serial.println(_portUDP);
+    DEBUGSTREAM->print("# Ascom Alpaca discovery port (UDP): ");
+    DEBUGSTREAM->println(_portUDP);
     _serverUDP.listen(_portUDP);
     _serverUDP.onPacket([this](AsyncUDPPacket& udpPacket) { this->onAlpacaDiscovery(udpPacket);});    
 
-    Serial.print("# Ascom Alpaca server port (TCP): ");
-    Serial.println(_portTCP);
+    DEBUGSTREAM->print("# Ascom Alpaca server port (TCP): ");
+    DEBUGSTREAM->println(_portTCP);
     _serverTCP.begin(_portTCP);
 
     _serverTCP.onNotFound([this]() {
@@ -35,10 +38,11 @@ void AlpacaServer::begin(uint16_t udp_port, uint16_t tcp_port)
     _registerCallbacks();
 }
 
+// add alpaca device to server
 void AlpacaServer::addDevice(AlpacaDevice *device)
 {
     if(_n_devices == ALPACA_MAX_DEVICES) {
-        Serial.println("# ERROR - max alpaca devices exceeded");
+        DEBUGSTREAM->println("# ERROR - max alpaca devices exceeded");
         return;
     }
 
@@ -58,24 +62,27 @@ void AlpacaServer::addDevice(AlpacaDevice *device)
     device->registerCallbacks();
 }
 
-
+// register callbacks for REST API
 void AlpacaServer::_registerCallbacks()
 {
-    Serial.println(F("# Register handler for \"/management/apiversions\" to getApiVersions"));
+    DEBUGSTREAM->println(F("# Register handler for \"/management/apiversions\" to getApiVersions"));
     _serverTCP.on("/management/apiversions", HTTP_GET, LHF(_getApiVersions));
-    Serial.println(F("# Register handler for \"/management/v1/description\" to getDescription"));
+    DEBUGSTREAM->println(F("# Register handler for \"/management/v1/description\" to getDescription"));
     _serverTCP.on("/management/v1/description", HTTP_GET, LHF(_getDescription));
-    Serial.println(F("# Register handler for \"/management/v1/configureddevices\" to getConfiguredDevices"));
+    DEBUGSTREAM->println(F("# Register handler for \"/management/v1/configureddevices\" to getConfiguredDevices"));
     _serverTCP.on("/management/v1/configureddevices", HTTP_GET, LHF(_getConfiguredDevices));
 }
 
 void AlpacaServer::_getApiVersions(){
     respond(ALPACA_API_VERSIONS);
 }
+
 void AlpacaServer::_getDescription(){
     respond(ALPACA_DESCRIPTION);
     //_serverTCP.send(200,"text/plain", ALPACA_DESCRIPTION);
 }
+
+// Return list of dicts describing connected alpaca devices
 void AlpacaServer::_getConfiguredDevices(){
     char value[ALPACA_MAX_DEVICES*256] = "";
     char deviceinfo[256];
@@ -102,6 +109,7 @@ void AlpacaServer::update()
     _serverTCP.handleClient();
 }
 
+// Update msg and client IDs
 void AlpacaServer::_getTransactionData()
 {
     _clientID = 0;
@@ -117,53 +125,67 @@ void AlpacaServer::_getTransactionData()
     _serverTransactionID++;
 }
 
-bool AlpacaServer::getParam(String name, bool &value){
-    String str_val;
-    if(getParam(name, str_val)) {
-        value = str_val.equalsIgnoreCase("True");
-        return true;
-    } else {
-        return false;
-    }
-}
-
-bool AlpacaServer::getParam(String name, float &value){
-    String str_val;
-    if(getParam(name, str_val)) {
-        value = str_val.toFloat();
-        return true;
-    } else {
-        return false;
-    }
-}
-
-bool AlpacaServer::getParam(String name, int &value){
-    String str_val;
-    if(getParam(name, str_val)) {
-        value = str_val.toInt();
-        return true;
-    } else {
-        return false;
-    }
-}
-
-bool AlpacaServer::getParam(String name, String &value)
+// return index of parameter 'name' in PUT request, return -1 if not found
+int AlpacaServer::_paramIndex(const char* name)
 {
     for(int i=0; i< _serverTCP.args(); i++) {
         if (_serverTCP.argName(i).equalsIgnoreCase(name)) {
-            value = _serverTCP.arg(i);
-            return true;
+            return i;
         }
     }
-    return false;
+    return -1;
 }
 
+// get value of parameter 'name' in PUT request and return true, return false if not found
+bool AlpacaServer::getParam(const char* name, bool &value)
+{
+    int index = _paramIndex(name);
+    if(index < 0) 
+        return false;
+    // both "True" and 1 should be interpreted as true.
+    value = _serverTCP.arg(index).equalsIgnoreCase("True");
+    value |= _serverTCP.arg(index).toInt() == 1;
+    return true;
+}
+
+// get value of parameter 'name' in PUT request and return true, return false if not found
+bool AlpacaServer::getParam(const char* name, float &value)
+{
+    int index = _paramIndex(name);
+    if(index < 0) 
+        return false;
+    value = _serverTCP.arg(index).toFloat();
+    return true;
+}
+
+// get value of parameter 'name' in PUT request and return true, return false if not found
+bool AlpacaServer::getParam(const char* name, int &value)
+{
+    int index = _paramIndex(name);
+    if(index < 0) 
+        return false;
+    value = _serverTCP.arg(index).toInt();
+    return true;
+}
+
+// get value of parameter 'name' in PUT request and return true, return false if not found
+bool AlpacaServer::getParam(const char* name, char *buffer, int buffer_size)
+{
+    int index = _paramIndex(name);
+    if(index < 0)
+        return false;
+    _serverTCP.arg(index).toCharArray(buffer, buffer_size);
+    return true;
+}
+
+// send response to alpaca client with bool
 void AlpacaServer::respond(bool value, int32_t error_number, const char* error_message)
 {
     const char* str_val = (value?"1":"0");
     respond(str_val, error_number, error_message);
 }
 
+// send response to alpaca client with int
 void AlpacaServer::respond(int32_t value, int32_t error_number, const char* error_message)
 {
     char str_val[16];
@@ -171,6 +193,7 @@ void AlpacaServer::respond(int32_t value, int32_t error_number, const char* erro
     respond(str_val, error_number, error_message);
 }
 
+// send response to alpaca client with float
 void AlpacaServer::respond(float value, int32_t error_number, const char* error_message)
 {
     char str_val[16];
@@ -178,16 +201,17 @@ void AlpacaServer::respond(float value, int32_t error_number, const char* error_
     respond(str_val, error_number, error_message);
 }
 
+// send response to alpaca client with string
 void AlpacaServer::respond(const char* value, int32_t error_number, const char* error_message)
 {
-    Serial.print("# Alpaca (");
-    Serial.print(_serverTCP.client().remoteIP());
-    Serial.print(") ");
-    Serial.println(_serverTCP.uri());
+    DEBUGSTREAM->print("# Alpaca (");
+    DEBUGSTREAM->print(_serverTCP.client().remoteIP());
+    DEBUGSTREAM->print(") ");
+    DEBUGSTREAM->println(_serverTCP.uri());
  
     _getTransactionData();
 
- 
+    // create msg to be sent, hope that buffer is large enough
     char response[2048];
     if( value == nullptr) {
         sprintf(response,ALPACA_RESPOSE_ERROR, _clientTransactionID, _serverTransactionID, error_number, error_message);
@@ -200,9 +224,10 @@ void AlpacaServer::respond(const char* value, int32_t error_number, const char* 
     }
     
     _serverTCP.send(200, ALPACA_JSON_TYPE, response);
-    Serial.println(response);
+    DEBUGSTREAM->println(response);
 }
 
+// Handler for replying to ascom alpaca discovery UDP packet
 void AlpacaServer::onAlpacaDiscovery(AsyncUDPPacket& udpPacket)
 {
     // check for arrived UDP packet at port
@@ -210,23 +235,23 @@ void AlpacaServer::onAlpacaDiscovery(AsyncUDPPacket& udpPacket)
     if (length == 0)
         return;
 
-    Serial.print(F("# Alpaca Discovery - Remote ip "));
-    Serial.println(udpPacket.remoteIP());
+    DEBUGSTREAM->print(F("# Alpaca Discovery - Remote ip "));
+    DEBUGSTREAM->println(udpPacket.remoteIP());
 
     // check size
     if (length < 16) {
-        Serial.print(F("# Alpaca Discovery - Wrong packet size "));
-        Serial.println(length);
+        DEBUGSTREAM->print(F("# Alpaca Discovery - Wrong packet size "));
+        DEBUGSTREAM->println(length);
         return;
     }
     
     // check package content
     AlpacaDiscoveryPacket* alpaca_packet = (AlpacaDiscoveryPacket*)udpPacket.data();
     if (alpaca_packet->valid()) {
-        Serial.print("# Alpaca Discovery - Header v. ");
-        Serial.println(alpaca_packet->version());
+        DEBUGSTREAM->print("# Alpaca Discovery - Header v. ");
+        DEBUGSTREAM->println(alpaca_packet->version());
     } else {
-        Serial.println("# Alpaca Discovery - Header mismatch");
+        DEBUGSTREAM->println("# Alpaca Discovery - Header mismatch");
         return;
     }
 

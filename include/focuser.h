@@ -6,10 +6,6 @@
 #include "messages.h"
 #include "AlpacaFocuser.h"
 
-struct FocuserConfig {
-
-};
-
 class Focuser : public AlpacaFocuser {
     private:
         static FastAccelStepperEngine _engine;
@@ -67,10 +63,8 @@ class Focuser : public AlpacaFocuser {
         void update();
         void zero();
         void stop() { _stepper->stopMove(); _pos_target = UINT32_MAX; }
-        void moveTo(int32_t position) { _pos_target = constrain(position, _pos_min, _pos_max); update(); }
         void move(int32_t distance) { _pos_target = constrain(_pos_target + distance, _pos_min, _pos_max); update();}
-        void stepInc() { _pos_target = constrain(_pos_target+1, _pos_min, _pos_max);}
-        void stepDec() { _pos_target = constrain(_pos_target-1, _pos_min, _pos_max);}
+        void setTemperature(float temp_reading) { _temp_meas = temp_reading; };
 
         // alpaca getters
         void aGetAbsolute()             { _alpacaServer->respond(1); }
@@ -78,7 +72,7 @@ class Focuser : public AlpacaFocuser {
         void aGetMaxIncrement()         { _alpacaServer->respond(_pos_max); }
         void aGetMaxStep()              { _alpacaServer->respond(_pos_max); }
         void aGetPosition()             { _alpacaServer->respond(_stepper->getCurrentPosition()); }
-        void aGetStepSize()             { _alpacaServer->respond(_steps_per_mm/1000); }
+        void aGetStepSize()             { _alpacaServer->respond(1000/_steps_per_mm); }
         void aGetTempComp()             { _alpacaServer->respond(_temp_comp); }
         void aGetTempCompAvailable()    { _alpacaServer->respond(1); }
         void aGetTemperature()          { _alpacaServer->respond(_temp_meas); }
@@ -87,22 +81,4 @@ class Focuser : public AlpacaFocuser {
         void aPutTempComp()             { _alpacaServer->getParam("TempComp", _temp_comp); _alpacaServer->respond(nullptr); }
         void aPutHalt()                 { stop(); _alpacaServer->respond(nullptr); }
         void aPutMove()                 { _alpacaServer->getParam("Position", _pos_target); _alpacaServer->respond(nullptr); }
-
-
-        float getTemperature() { return _temp_meas; }
-        int32_t getPosition() { return _stepper->getCurrentPosition(); }
-        int32_t getTarget() { return _pos_target; }
-        int32_t getLimit() { return _pos_max; }
-        float getTempCoeff() { return _temp_coeff; }
-        float getStepsPerMM() { return _steps_per_mm; }
-        bool getTempComp() { return _temp_comp; }
-        bool isMoving() { return _stepper->isRunning(); }
-        bool isZeroed() { return _zeroed; }
-        void setPosition(int32_t position) { setTarget(position); _stepper->setCurrentPosition(_pos_target); }
-        void setTemperature(float temp_reading) { _temp_meas = temp_reading; }
-        void setTarget(int32_t position) { _pos_target = constrain(position, _pos_min, _pos_max); }
-        void setLimit(int32_t limit) { _pos_max = max(_pos_min, limit); }
-        void setTempCoeff(float coeff) { _temp_coeff = constrain(coeff, -COEFF_RANGE, COEFF_RANGE); }
-        void setTempComp(bool enabled) { _temp_comp = enabled; }
-        void setStepsPerMM(float steps) { _steps_per_mm = steps; }
 };

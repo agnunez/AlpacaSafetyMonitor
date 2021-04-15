@@ -33,16 +33,20 @@ class AlpacaServer
         void _getDescription();
         void _getConfiguredDevices();
         void _getTransactionData();
+        int _paramIndex(const char* name);
 
     public:
+        bool            debug = false;
+        Stream*         debugstream = &Serial;
+
         AlpacaServer(const char* name);
         void begin(uint16_t udp_port, uint16_t tcp_port);
         void update();
         void addDevice(AlpacaDevice *device);
-        bool getParam(String name, bool &value);
-        bool getParam(String name, float &value);
-        bool getParam(String name, int &value);
-        bool getParam(String name, String &value);
+        bool getParam(const char* name, bool &value);
+        bool getParam(const char* name, float &value);
+        bool getParam(const char* name, int &value);
+        bool getParam(const char* name, char *buffer, int buffer_size);
         void respond(bool value, int32_t error_number=0, const char* error_message="");
         void respond(int value, int32_t error_number=0, const char* error_message="");
         void respond(float value, int32_t error_number=0, const char* error_message="");

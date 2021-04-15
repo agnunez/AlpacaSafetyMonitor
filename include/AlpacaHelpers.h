@@ -1,9 +1,11 @@
 #pragma once
 #include <Arduino.h>
 
+// settings
+#define ALPACA_MAX_DEVICES 8
+
 #define ALPACA_DISCOVERY_HEADER "alpacadiscovery"
 #define ALPACA_DISCOVERY_LENGTH 64
-
 
 // discovery package
 typedef struct
@@ -23,13 +25,9 @@ typedef union {
     char buffer[ALPACA_DISCOVERY_LENGTH];
 } AlpacaDiscoveryBuffer;
 
-// settings
-#define ALPACA_MAX_DEVICES 8
-
 
 // return
 #define ALPACA_API_VERSIONS "[1]"
-#define ALPACA_FOCUSER_INTERFACE_VERSION "3"
 #define ALPACA_DRIVER_VER "v1.0.0"
 #define ALPACA_DRIVER_DESC "ESP32 Ascom Alpaca driver"
 #define ALPACA_DRIVER_INFO "ESP32 Ascom Alpaca driver by Njaal Brekke"

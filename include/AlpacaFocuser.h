@@ -1,6 +1,8 @@
 #pragma once
 #include "AlpacaDevice.h"
 
+#define ALPACA_FOCUSER_INTERFACE_VERSION "3"
+
 class AlpacaFocuser : public AlpacaDevice
 {
     protected:

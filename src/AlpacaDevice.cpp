@@ -1,18 +1,21 @@
 #include "AlpacaDevice.h"
 
+#define DEBUGSTREAM if(_alpacaServer->debug) _alpacaServer->debugstream
+
+// create url and register callback for REST API
 void AlpacaDevice::createCallBack(WebServer::THandlerFunction fn, http_method type, const char command[], bool devicemethod)
 {
     char url[64];
     sprintf(url, ALPACA_DEVICE_COMMAND, _device_type, _device_number, command);
-    Serial.print("# Register handler for \"");
-    Serial.print(url);
-    Serial.print("\" to ");
-    Serial.println(command);
+    DEBUGSTREAM->print("# Register handler for \"");
+    DEBUGSTREAM->print(url);
+    DEBUGSTREAM->print("\" to ");
+    DEBUGSTREAM->println(command);
     
     // register handler for generated URI
     _alpacaServer->getTCPServer()->on(url, type, fn);
 
-    // add to supported methods if devicemethod is true
+    // add command to supported methods if devicemethod is true
     if(devicemethod) {
         int len = strlen(_supported_actions);
         _supported_actions[len-1] = '\0';
@@ -38,6 +41,7 @@ const char*  AlpacaDevice::getDeviceUID() {
     return _device_uid;
 }
 
+// register callbacks for REST API
 void AlpacaDevice::registerCallbacks()
 {
     this->createCallBack(LHF(aPutAction), HTTP_PUT, "action", false);
