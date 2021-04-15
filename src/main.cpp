@@ -53,11 +53,11 @@ void setup_wifi()
   // setup wifi
   Serial.print(F("\n# Starting WiFi"));
 
-  //DoubleResetDetector drd = DoubleResetDetector(DRD_TIMEOUT, DRD_ADDRESS);
+  DoubleResetDetector drd = DoubleResetDetector(DRD_TIMEOUT, DRD_ADDRESS);
   ESP_WiFiManager ESP_wifiManager(HOSTNAME);
   ESP_wifiManager.setConnectTimeout(60);
 
-  if (ESP_wifiManager.WiFi_SSID() == "") { // || drd.detectDoubleReset()) {
+  if (ESP_wifiManager.WiFi_SSID() == "" || drd.detectDoubleReset()) {
     Serial.println(F("# Starting Config Portal"));
     digitalWrite(PIN_WIFI_LED, HIGH);
     if (!ESP_wifiManager.startConfigPortal()) {

@@ -2,7 +2,6 @@
 #include <Arduino.h>
 #include "config.h"
 #include "pins.h"
-#include "messages.h"
 
 #include <ESP_WiFiManager.h>
 #include <ESP_DoubleResetDetector.h>
@@ -12,12 +11,9 @@
 #include <FastAccelStepper.h>
 #include <OneWire.h>
 #include <DallasTemperature.h>
-#include <FS.h>
 
 #include "focuser.h"
 #include "AlpacaServer.h"
-
-#define PROGRAM_VERSION "1.0.0"
 
 // 
 bool encA, encB;

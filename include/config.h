@@ -36,5 +36,4 @@
 
 // ASCOM Alpaca
 #define ALPACA_UDP_PORT     32227
-#define ALPACA_UDP_JSON     256
 #define ALPACA_TCP_PORT     80

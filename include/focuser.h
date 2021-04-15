@@ -3,7 +3,6 @@
 #include <TMCStepper.h>
 #include <FastAccelStepper.h>
 #include "config.h"
-#include "messages.h"
 #include "AlpacaFocuser.h"
 
 class Focuser : public AlpacaFocuser {
