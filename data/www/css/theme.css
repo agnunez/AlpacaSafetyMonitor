@@ -1,0 +1,63 @@
+:root {
+    --primary:#67789c;
+    --hover:  #6e86b9;
+    --border: #607781;
+    --header: #bac4c9;
+    --tab:    #d1dadf;
+    --body:   #f5f8f8;
+}
+
+body {
+    background-image: linear-gradient(to bottom right, #46656b, #7b8891);
+    background-repeat: no-repeat;
+    background-position: right;
+    background-attachment: fixed;
+}
+.btn-primary {
+    background-color: var(--primary);
+    border-color: var(--border);
+}
+
+.custom-control-input:checked ~ .custom-control-label::before,
+.btn.btn-primary:active {
+    background-color: var(--primary) !important;
+    border-color: var(--border);
+}
+
+.btn.btn-primary:hover,
+.btn.btn-primary:focus {
+    background-color: var(--hover) !important;
+    border-color: var(--border);
+}
+
+.custom-control.custom-switch {
+    margin-top: .5rem !important;
+}
+
+.container {
+    max-width: 700px;
+}
+.card-header {
+    background-color: var(--header);
+    border-bottom-color: var(--border);
+}
+.card-body {
+    background-color: var(--body);
+}
+a.nav-link {
+    color: black;
+    border-left-color: var(--border) !important;
+    border-right-color: var(--border) !important;
+    border-top-color: var(--border) !important;
+    border-bottom-color: var(--border) !important;
+    background-color: var(--tab) !important;
+}
+.nav-link.active {
+    border-bottom-color: var(--body) !important;
+    background-color: var(--body) !important;
+}
+.logo {
+    content: url("/images/ascom.png");
+    height: 92px;
+    width: 92px;
+}​

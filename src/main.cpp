@@ -27,19 +27,19 @@ void setup() {
 
   // setup ASCOM Alpaca server
   alpacaServer.begin(ALPACA_UDP_PORT, ALPACA_TCP_PORT);
-
-  // setup focuser
+  // add devices
   for(uint8_t i=0; i<N_FOCUSERS; i++) {
     focuser[i].begin();
     alpacaServer.addDevice(&focuser[i]);
   }
+  // load settings
+  alpacaServer.loadSettings();
 
   setup_encoder();
   setup_sensors();
 }
 
 void loop() {
-  alpacaServer.update();
   update_encoder();
   update_sensors();
   update_focus();

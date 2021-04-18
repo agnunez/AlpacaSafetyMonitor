@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>ESP Arduino Ascom Setup</title>
+        <meta charset="UTF-8">
+        <!-- Latest compiled and minified CSS -->
+        <link rel="stylesheet" href="/css/bootstrap.min.css">
+        <link rel="stylesheet" href="/css/jquery-ui.min.css">
+        <link rel="stylesheet" href="/css/theme.css">
+
+        <script src="/js/jquery.min.js"></script>
+        <script src="/js/jquery-ui.min.js"></script>
+        <script src="/js/bootstrap.min.js"></script>
+        <script src="/js/jsonFormer.jquery.js"></script>
+
+    </head>
+    <body>
+        <div class="container">
+            <div class="card mb-3 mt-3">
+                <div class="card-header">
+                    <div id="title"><H3>ESP Ascom Alpaca Server</H3></div>
+                    <ul id="nav-links" class="nav nav-tabs card-header-tabs">
+                    </ul>
+                </div>
+            <div class="card-body">
+                <div id="form-container"></div>
+                <button type="button" id="json_refresh" class="btn btn-primary">Refresh</button>
+                <button type="button" id="json_update" class="btn btn-primary">Update</button>
+                <button type="button" id="json_save" class="btn btn-primary">Save</button>
+            </div>
+        </div>
+        <script>
+            $(document).ready(function () {
+                $.ajaxSetup({ cache: false });
+                $.getJSON("jsondata", function(data) {
+                    $('#form-container').jsonFormer({
+                        title: "Setup",
+                        jsonObject: data
+                    });
+                    data;       
+                });
+                $("#json_update").click(function () {
+                    $.ajax({
+                        url: 'jsondata',
+                        type: 'POST',
+                        dataType: "json",
+                        data: JSON.stringify($('#form-container').jsonFormer('formData')),
+                        contentType: 'application/json',
+                        success: function(msg) {
+
+                        }
+                    })
+                });
+                $("#json_save").click(function () {
+                    $.getJSON("/save_settings", function(data) {
+                        alert(data['saved'] == true? "Saved succesfully" : "Save failed!");
+                    })
+                });
+                $("#json_refresh").click(function () {
+                    location.reload(); // until json-only refresh is ready
+                });
+                $.getJSON("/links", function(data) {
+                    let path = window.location.pathname;
+                    for(name in data) {
+                        let url = data[name];
+                        let navitem = $('<li class="nav-item"><a class="nav-link" href="#"></a></li>');
+                        let a = navitem.find("a");
+                        a.attr('href', url).text(name);
+                        if(path == url)
+                            a.addClass('active');
+                        $("#nav-links").append(navitem);
+                    }
+                });
+            });
+        </script>
+    </body>
+</html>

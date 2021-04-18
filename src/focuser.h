@@ -66,18 +66,22 @@ class Focuser : public AlpacaFocuser {
         void setTemperature(float temp_reading) { _temp_meas = temp_reading; };
 
         // alpaca getters
-        void aGetAbsolute()             { _alpacaServer->respond(1); }
-        void aGetIsMoving()             { _alpacaServer->respond(_stepper->isRunning()); }
-        void aGetMaxIncrement()         { _alpacaServer->respond(_pos_max); }
-        void aGetMaxStep()              { _alpacaServer->respond(_pos_max); }
-        void aGetPosition()             { _alpacaServer->respond(_stepper->getCurrentPosition()); }
-        void aGetStepSize()             { _alpacaServer->respond(1000/_steps_per_mm); }
-        void aGetTempComp()             { _alpacaServer->respond(_temp_comp); }
-        void aGetTempCompAvailable()    { _alpacaServer->respond(1); }
-        void aGetTemperature()          { _alpacaServer->respond(_temp_meas); }
+        void aGetAbsolute(AsyncWebServerRequest *request)             { _alpacaServer->respond(request, 1); }
+        void aGetIsMoving(AsyncWebServerRequest *request)             { _alpacaServer->respond(request, _stepper->isRunning()); }
+        void aGetMaxIncrement(AsyncWebServerRequest *request)         { _alpacaServer->respond(request, _pos_max); }
+        void aGetMaxStep(AsyncWebServerRequest *request)              { _alpacaServer->respond(request, _pos_max); }
+        void aGetPosition(AsyncWebServerRequest *request)             { _alpacaServer->respond(request, _stepper->getCurrentPosition()); }
+        void aGetStepSize(AsyncWebServerRequest *request)             { _alpacaServer->respond(request, 1000/_steps_per_mm); }
+        void aGetTempComp(AsyncWebServerRequest *request)             { _alpacaServer->respond(request, _temp_comp); }
+        void aGetTempCompAvailable(AsyncWebServerRequest *request)    { _alpacaServer->respond(request, 1); }
+        void aGetTemperature(AsyncWebServerRequest *request)          { _alpacaServer->respond(request, _temp_meas); }
 
         // alpaca setters
-        void aPutTempComp()             { _alpacaServer->getParam("TempComp", _temp_comp); _alpacaServer->respond(nullptr); }
-        void aPutHalt()                 { stop(); _alpacaServer->respond(nullptr); }
-        void aPutMove()                 { _alpacaServer->getParam("Position", _pos_target); _alpacaServer->respond(nullptr); }
+        void aPutTempComp(AsyncWebServerRequest *request)             { _alpacaServer->getParam(request, "TempComp", _temp_comp); _alpacaServer->respond(request, nullptr); }
+        void aPutHalt(AsyncWebServerRequest *request)                 { stop(); _alpacaServer->respond(request, nullptr); }
+        void aPutMove(AsyncWebServerRequest *request)                 { _alpacaServer->getParam(request, "Position", _pos_target); _alpacaServer->respond(request, nullptr); }
+
+        // alpaca json
+        void aReadJson(JsonObject &root);
+        void aWriteJson(JsonObject &root);
 };

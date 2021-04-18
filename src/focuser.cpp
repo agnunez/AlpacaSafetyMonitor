@@ -104,3 +104,40 @@ void Focuser::zero()
     _zeroed = true;
     _stepper->setSpeedInUs(1000000/(_speed * _steps_per_mm));
 }
+
+void Focuser::aReadJson(JsonObject &root)
+{
+    AlpacaFocuser::aReadJson(root);
+    if(JsonObject obj_config = root[F("Configuration")]) {
+        _pos_min        = obj_config[F("Position_min")] | _pos_min;
+        _pos_max        = obj_config[F("Position_max")] | _pos_max;
+        _backlash       = obj_config[F("Backlash")] | _backlash;
+        _inverted       = obj_config[F("Inverted")] | _inverted;
+        _steps_per_mm   = obj_config[F("Stepsize")] | _steps_per_mm;
+        _speed          = obj_config[F("Max speed")] | _speed;
+        _acceleration   = obj_config[F("Acceleration")] | _acceleration;
+        _temp_coeff     = obj_config[F("Temp_coeffecient")] | _temp_coeff;
+        _temp_comp      = obj_config[F("Temp_compensation")] | _temp_comp;
+    }
+    _pos_target = root[F("State")][F("Target_position")] | _pos_target;
+}
+
+void Focuser::aWriteJson(JsonObject &root)
+{
+    AlpacaFocuser::aWriteJson(root);
+    // read-only values marked with #
+    JsonObject obj_config = root.createNestedObject(F("Configuration"));
+    obj_config[F("Position_min")] = _pos_min;
+    obj_config[F("Position_max")] = _pos_max;
+    obj_config[F("Backlash")]     =_backlash;
+    obj_config[F("Inverted")]     = _inverted;
+    obj_config[F("Stepsize")]  = _steps_per_mm;
+    obj_config[F("Max_speed")]    = _speed;
+    obj_config[F("Acceleration")] = _acceleration;
+    obj_config[F("Temp_coeffecient")]   = _temp_coeff;
+    obj_config[F("Temp_compensation")]    = _temp_comp;
+    JsonObject obj_state  = root.createNestedObject(F("State"));
+    obj_state[F("Target_position")]       = _pos_target;
+    obj_state[F("Current_position")]    = _stepper->getCurrentPosition();
+    obj_state[F("Temperature")]   = _temp_meas;
+}

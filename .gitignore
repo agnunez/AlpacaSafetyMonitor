@@ -4,3 +4,12 @@
 .vscode/launch.json
 .vscode/ipch
 docs/api
+data/www/jsondata.device
+data/www/jsondata.server
+data/www/links.json
+.gitignore
+data/www/js/jquery-ui.min.js
+data/www/js/jquery.min.js
+data/www/js/bootstrap.min.js
+data/www/css/jquery-ui.min.css
+data/www/css/bootstrap.min.css
