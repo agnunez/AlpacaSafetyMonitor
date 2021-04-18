@@ -9,3 +9,4 @@ which stepper one can turn a selection switch.
 It uses acceleration and top speed to calculate the movement of the focus to
 reduce vibrations.
 
+For Ascom Alpaca compability it uses ESPAscomAlpacaServer library (https://github.com/elenhinan/ESPAscomAlpacaServer)
