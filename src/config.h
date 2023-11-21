@@ -1,9 +1,10 @@
 #pragma once
 // General
-#define DEVICENAME          "ESP AstroFocuser"
+#define DEVICENAME          "AlpacaESP32driver"
 #define VERSION             "v1.0.0"
-#define COPYRIGHT           "2021 Njål Brekke"
-#define FOCUSER2_ENABLE     true
+#define COPYRIGHT           "2021 Njål Brekke & @agnuca"
+#define FOCUSER2_ENABLE     false
+#define SAFETYMONITOR2_ENABLE     false
 #define COEFF_RANGE         1000 // temp coeff in um/C
 #define HOMING_SPEED        1.0f
 #define DEBUG
@@ -27,12 +28,12 @@
 #define STP_STEPS_PER_MM   (200 * STP_MICROSTEP * STP_GEAR_RATIO / STP_MM_PER_REV)
 
 // WiFi config
-#define HOSTNAME             "astrofocuser"
+#define HOSTNAME             "alpaca_esp32"
 #define TCP_PORT             3117
-#define ESP_DRD_USE_EEPROM   true
-#define DRD_TIMEOUT          3
-#define DRD_ADDRESS          0
-#define ESP_DRD_USE_SPIFFS   true
+//#define ESP_DRD_USE_EEPROM   false //true
+//#define DRD_TIMEOUT          3
+//#define DRD_ADDRESS          0
+//#define ESP_DRD_USE_SPIFFS   false //true
 
 // ASCOM Alpaca
 #define ALPACA_UDP_PORT     32227

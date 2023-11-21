@@ -6,6 +6,13 @@
   #define N_FOCUSERS 1
 #endif
 
+#ifdef SAFETYMONITOR2_ENABLE
+  #define N_SAFETYMONITORS 2
+#else
+  #define N_SAFETYMONITORS 1
+#endif
+
+
 OneWire oneWire(PIN_DS1820);
 DallasTemperature sensors(&oneWire);
 Focuser focuser[N_FOCUSERS] = {
@@ -14,10 +21,19 @@ Focuser focuser[N_FOCUSERS] = {
   ,Focuser(&STP2_SERIAL, STP2_RX, STP2_TX, STP2_STEP, STP2_DIR, STP2_EN, PIN_HOME2)
 #endif
 };
+
+SafetyMonitor safetymonitor[N_SAFETYMONITORS] = {
+  SafetyMonitor(&STP1_SERIAL, STP1_RX, STP1_TX, STP1_STEP, STP1_DIR, STP1_EN, PIN_HOME1)
+#ifdef SAFETYMONITOR2_ENABLE
+  ,SafetyMonitor(&STP2_SERIAL, STP2_RX, STP2_TX, STP2_STEP, STP2_DIR, STP2_EN, PIN_HOME2)
+#endif
+};
+
+
 WiFiServer tcpServer(TCP_PORT);
 WiFiClient tcpClient;
 
-AlpacaServer alpacaServer("AstroFocus");
+AlpacaServer alpacaServer("Alpaca_ESP32");
 
 void setup() {
   // setup serial
@@ -32,6 +48,12 @@ void setup() {
     focuser[i].begin();
     alpacaServer.addDevice(&focuser[i]);
   }
+  for(uint8_t i=0; i<N_SAFETYMONITORS; i++) {
+    safetymonitor[i].begin();
+    alpacaServer.addDevice(&safetymonitor[i]);
+  }
+  
+  
   // load settings
   alpacaServer.loadSettings();
 
@@ -53,13 +75,14 @@ void setup_wifi()
   // setup wifi
   Serial.print(F("\n# Starting WiFi"));
 
-  DoubleResetDetector drd = DoubleResetDetector(DRD_TIMEOUT, DRD_ADDRESS);
+  //DoubleResetDetector drd = DoubleResetDetector(DRD_TIMEOUT, DRD_ADDRESS);
   ESP_WiFiManager ESP_wifiManager(HOSTNAME);
   ESP_wifiManager.setConnectTimeout(60);
 
-  if (ESP_wifiManager.WiFi_SSID() == "" || drd.detectDoubleReset()) {
+  //if (ESP_wifiManager.WiFi_SSID() == "" || drd.detectDoubleReset()) {
+  if (ESP_wifiManager.WiFi_SSID() == "" ) {
     Serial.println(F("# Starting Config Portal"));
-    digitalWrite(PIN_WIFI_LED, HIGH);
+    //digitalWrite(PIN_WIFI_LED, HIGH);
     if (!ESP_wifiManager.startConfigPortal()) {
       Serial.println(F("# Not connected to WiFi"));
     } else {
@@ -76,7 +99,7 @@ void setup_wifi()
   else {
     Serial.print(F("# Local IP: "));
     Serial.println(WiFi.localIP());
-    digitalWrite(PIN_WIFI_LED, HIGH);
+    //digitalWrite(PIN_WIFI_LED, HIGH);
     if(!MDNS.begin("HOSTNAME")) {
      Serial.println("# Error starting mDNS");
      return;

@@ -4,7 +4,7 @@
 #include "pins.h"
 
 #include <ESP_WiFiManager.h>
-#include <ESP_DoubleResetDetector.h>
+//#include <ESP_DoubleResetDetector.h>
 #include <ESPmDNS.h>
 #include <SPI.h>
 #include <TMCStepper.h>
@@ -13,6 +13,7 @@
 #include <DallasTemperature.h>
 
 #include "focuser.h"
+#include "safetymonitor.h"
 #include "AlpacaServer.h"
 
 // 
