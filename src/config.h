@@ -38,3 +38,11 @@
 // ASCOM Alpaca
 #define ALPACA_UDP_PORT     32227
 #define ALPACA_TCP_PORT     80
+
+// MLX90614 sensor
+#define SDApin 22     // Pins at SDA=22 SCL=21. Change them as required
+#define SCLpin 21
+
+
+// Roof pinout
+#define ROOFpin 4

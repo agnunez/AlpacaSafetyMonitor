@@ -1,85 +1,52 @@
 #pragma once
 #include <Arduino.h>
-#include <TMCStepper.h>
-#include <FastAccelStepper.h>
 #include "config.h"
 #include "AlpacaSafetyMonitor.h" 
+#include <Wire.h>
+#include <Adafruit_MLX90614.h>
+#include <Adafruit_BME280.h>
+
+
+
+// mlx static and float variables
+#define sgn(x) ((x) < 0 ? -1 : ((x) > 0 ? 1 : 0))          // missing math function sign of number
+static float k[] = {0., 33., 0., 4., 100., 100., 0., 0.};  // sky temperature corrections polynomial coefficients
+static float bme_temperature, bme_humidity, bme_pressure, mlx_tempamb, mlx_tempobj, tempsky, noise_db, dewpoint;
+static float limit_tamb = 0.;     // freezing below this
+static float limit_tsky = 30.; //-15.;   // cloudy above this
+static float limit_humid = 90.;   // risk for electronics above this
+static float limit_dew = 5.;      // risk for optics with temp - dewpoint below this
+static float delay2open = 1200.;   // waiting time before open roof after a safety close
+static float delay2close = 120.;   // waiting time before close roof with continuos overall safety waring for this
+static float time2open, time2close;
+static bool  status_tamb, status_tsky, status_humid, status_dew, status_weather, instant_status, status_roof;
+
+// Circular buffer functions
+#define CB_SIZE 24
+static float cb[CB_SIZE] = {0.};
+static float cb_noise[CB_SIZE] = {0.};
+static int   cb_index     = 0;
+static float cb_avg       = 0.0;
+static float cb_rms       = 0.0;
+
 
 class SafetyMonitor : public AlpacaSafetyMonitor {
     private:
-        static FastAccelStepperEngine _engine;
-        static bool _engine_init;
         static uint8_t _n_safetymonitors;
-        static SafetyMonitor *_safetymonitor_array[4];
-        static void (*_isr_array[])();
-        static ICACHE_RAM_ATTR void _isr_homing0();
-        static ICACHE_RAM_ATTR void _isr_homing1();
-        static ICACHE_RAM_ATTR void _isr_homing2();
-        static ICACHE_RAM_ATTR void _isr_homing3();
-
-        TMC2208Stepper *_driver = NULL;
-        FastAccelStepper *_stepper = NULL;
+        static SafetyMonitor *_safetymonitor_array[1];
         uint8_t _safetymonitor_index;
-
-        HardwareSerial *_serialport;
-        uint8_t _pin_rx;
-        uint8_t _pin_tx;
-        uint8_t _pin_step;
-        uint8_t _pin_dir;
-        uint8_t _pin_en;
-        uint8_t _pin_home;
-
-        int32_t _pos_target = 0;
-        int32_t _pos_min = 0;
-        int32_t _pos_max = 32000;
-        int32_t _backlash = 0;
-
-        bool _inverted = false;
-        float _steps_per_mm = STP_STEPS_PER_MM;
-        float _speed = STP_MAX_SPEED;
-        float _acceleration = STP_ACCELERATION;
-        
-        float _temp_coeff = 0.0f;
-        float _temp_meas = NAN;
-        bool _temp_comp = false;
-        bool _zeroed = false;
-
-        void _updateMotionParam();
-        void _setHome() { _stepper->forceStopAndNewPosition(0); _pos_target=0; }
+        bool _issafe = false;
 
     public:
-        SafetyMonitor(HardwareSerial *serialport, uint8_t pin_rx, uint8_t pin_tx, uint8_t pin_step, uint8_t _pin_dir, uint8_t pin_en, uint8_t pin_home)
-            : AlpacaSafetyMonitor()
-            , _serialport(serialport)
-            , _pin_rx(pin_rx)
-            , _pin_tx(pin_tx)
-            , _pin_step(pin_step)
-            , _pin_dir(_pin_dir)
-            , _pin_en(pin_en)
-            , _pin_home(pin_home)
+        SafetyMonitor()  : AlpacaSafetyMonitor()
         { _safetymonitor_index = _n_safetymonitors++; }
         bool begin();
         void update();
-        void zero();
-        void stop() { _stepper->stopMove(); _pos_target = UINT32_MAX; }
-        void move(int32_t distance) { _pos_target = constrain(_pos_target + distance, _pos_min, _pos_max); update();}
-        void setTemperature(float temp_reading) { _temp_meas = temp_reading; };
 
         // alpaca getters
-        void aGetAbsolute(AsyncWebServerRequest *request)             { _alpacaServer->respond(request, 1); }
-        void aGetIsMoving(AsyncWebServerRequest *request)             { _alpacaServer->respond(request, _stepper->isRunning()); }
-        void aGetMaxIncrement(AsyncWebServerRequest *request)         { _alpacaServer->respond(request, _pos_max); }
-        void aGetMaxStep(AsyncWebServerRequest *request)              { _alpacaServer->respond(request, _pos_max); }
-        void aGetPosition(AsyncWebServerRequest *request)             { _alpacaServer->respond(request, _stepper->getCurrentPosition()); }
-        void aGetStepSize(AsyncWebServerRequest *request)             { _alpacaServer->respond(request, 1000/_steps_per_mm); }
-        void aGetTempComp(AsyncWebServerRequest *request)             { _alpacaServer->respond(request, _temp_comp); }
-        void aGetTempCompAvailable(AsyncWebServerRequest *request)    { _alpacaServer->respond(request, 1); }
-        void aGetTemperature(AsyncWebServerRequest *request)          { _alpacaServer->respond(request, _temp_meas); }
+        void aGetIsSafe(AsyncWebServerRequest *request)  { _alpacaServer->respond(request, status_roof); }
 
         // alpaca setters
-        void aPutTempComp(AsyncWebServerRequest *request)             { _alpacaServer->getParam(request, "TempComp", _temp_comp); _alpacaServer->respond(request, nullptr); }
-        void aPutHalt(AsyncWebServerRequest *request)                 { stop(); _alpacaServer->respond(request, nullptr); }
-        void aPutMove(AsyncWebServerRequest *request)                 { _alpacaServer->getParam(request, "Position", _pos_target); _alpacaServer->respond(request, nullptr); }
 
         // alpaca json
         void aReadJson(JsonObject &root);

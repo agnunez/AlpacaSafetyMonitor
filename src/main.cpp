@@ -1,12 +1,12 @@
 #include "main.h"
 
-#ifdef FOCUSER2_ENABLE
+#if FOCUSER2_ENABLE
   #define N_FOCUSERS 2
 #else
   #define N_FOCUSERS 1
 #endif
 
-#ifdef SAFETYMONITOR2_ENABLE
+#if SAFETYMONITOR2_ENABLE
   #define N_SAFETYMONITORS 2
 #else
   #define N_SAFETYMONITORS 1
@@ -15,17 +15,21 @@
 
 OneWire oneWire(PIN_DS1820);
 DallasTemperature sensors(&oneWire);
+
+
+
 Focuser focuser[N_FOCUSERS] = {
   Focuser(&STP1_SERIAL, STP1_RX, STP1_TX, STP1_STEP, STP1_DIR, STP1_EN, PIN_HOME1)
-#ifdef FOCUSER2_ENABLE
+#if FOCUSER2_ENABLE
   ,Focuser(&STP2_SERIAL, STP2_RX, STP2_TX, STP2_STEP, STP2_DIR, STP2_EN, PIN_HOME2)
 #endif
 };
 
+
 SafetyMonitor safetymonitor[N_SAFETYMONITORS] = {
-  SafetyMonitor(&STP1_SERIAL, STP1_RX, STP1_TX, STP1_STEP, STP1_DIR, STP1_EN, PIN_HOME1)
-#ifdef SAFETYMONITOR2_ENABLE
-  ,SafetyMonitor(&STP2_SERIAL, STP2_RX, STP2_TX, STP2_STEP, STP2_DIR, STP2_EN, PIN_HOME2)
+  SafetyMonitor()
+#if SAFETYMONITOR2_ENABLE
+  ,SafetyMonitor()
 #endif
 };
 
@@ -43,6 +47,7 @@ void setup() {
 
   // setup ASCOM Alpaca server
   alpacaServer.begin(ALPACA_UDP_PORT, ALPACA_TCP_PORT);
+  alpacaServer.debug;
   // add devices
   for(uint8_t i=0; i<N_FOCUSERS; i++) {
     focuser[i].begin();
@@ -59,12 +64,19 @@ void setup() {
 
   setup_encoder();
   setup_sensors();
+  setup_i2cmlxbme();
 }
 
 void loop() {
   update_encoder();
   update_sensors();
   update_focus();
+  if (millis() > lastTimeRan + measureDelay)  {   // read every measureDelay without blocking Webserver
+    update_i2cmlxbme(measureDelay);
+    Serial.print(F("\n# updatei2c sensors"));
+    lastTimeRan = millis();
+  }
+
   delay(50); 
 }
 
@@ -77,7 +89,7 @@ void setup_wifi()
 
   //DoubleResetDetector drd = DoubleResetDetector(DRD_TIMEOUT, DRD_ADDRESS);
   ESP_WiFiManager ESP_wifiManager(HOSTNAME);
-  ESP_wifiManager.setConnectTimeout(60);
+  ESP_wifiManager.setConnectTimeout(30);
 
   //if (ESP_wifiManager.WiFi_SSID() == "" || drd.detectDoubleReset()) {
   if (ESP_wifiManager.WiFi_SSID() == "" ) {

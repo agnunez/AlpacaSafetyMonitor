@@ -1,125 +1,39 @@
 #include "safetymonitor.h"
 
+Adafruit_BME280 bme;  // I2C
+Adafruit_MLX90614 mlx = Adafruit_MLX90614();
+
 // todo: set update() to private and only run when needed
 
-FastAccelStepperEngine SafetyMonitor::_engine = FastAccelStepperEngine();
-bool SafetyMonitor::_engine_init = false;
-
-// cannot call member functions directly from interrupt, so need these helpers for up to 4 focus motors.
+// cannot call member functions directly from interrupt, so need these helpers for up to 1 SafetyMonitor
 uint8_t SafetyMonitor::_n_safetymonitors = 0;
-SafetyMonitor *SafetyMonitor::_safetymonitor_array[4] = { nullptr, nullptr, nullptr, nullptr };
-void ICACHE_RAM_ATTR SafetyMonitor::_isr_homing0() { _safetymonitor_array[0]->_setHome(); }
-void ICACHE_RAM_ATTR SafetyMonitor::_isr_homing1() { _safetymonitor_array[1]->_setHome(); }
-void ICACHE_RAM_ATTR SafetyMonitor::_isr_homing2() { _safetymonitor_array[2]->_setHome(); }
-void ICACHE_RAM_ATTR SafetyMonitor::_isr_homing3() { _safetymonitor_array[3]->_setHome(); }
-void (*SafetyMonitor::_isr_array[])() = { _isr_homing0, _isr_homing1, _isr_homing2, _isr_homing3 };
+SafetyMonitor *SafetyMonitor::_safetymonitor_array[1] = { nullptr };
 
 bool SafetyMonitor::begin()
 {
-    // initialize stepper engine
-    if (!_engine_init) {
-        _engine.init();
-        _engine_init = true;
-    }
-
-    // setup TMC driver
-    _serialport->begin(115200, SERIAL_8N1, _pin_rx, _pin_tx);
-    _driver = new TMC2208Stepper(_serialport, TMC_RS);
-    _driver->begin();
-    _driver->rms_current(STP_CURRENT);
-    _driver->en_spreadCycle(false); // enable stealthchop
-    _driver->pwm_autoscale(true);
-    _driver->microsteps(STP_MICROSTEP);
-
-    // setup stepper pulse engine
-    _stepper = _engine.stepperConnectToPin(_pin_step);
-    _stepper->setDirectionPin(_pin_dir);
-    _stepper->setEnablePin(_pin_en);
-    _stepper->setAutoEnable(false); // power save mode
-    _stepper->setCurrentPosition(_pos_target);
-
-    // calculate motion parameters
-    _updateMotionParam();
 
     // done
-    _stepper->enableOutputs();
-
-    // setup interrupt for homing
-    pinMode(_pin_home, INPUT_PULLUP);
-    _safetymonitor_array[_safetymonitor_index] = this;
-    attachInterrupt(_pin_home, _isr_array[_safetymonitor_index], CHANGE);
-
     return true;
-}
-
-void SafetyMonitor::_updateMotionParam()
-{
-    _driver->shaft(_inverted); // invert direction
-    _stepper->setSpeedInUs(1000000/(_speed * _steps_per_mm));
-    _stepper->setAcceleration(_acceleration * _steps_per_mm);
 }
 
 void SafetyMonitor::update()
 {
     int target;
-    // if stepper is stopping after command, wait for stop to reset target pos
-    if (_pos_target == UINT32_MAX) {
-        if (_stepper->isRunning())
-            return;
-        else
-            _pos_target = _stepper->getCurrentPosition();
-    }
-
-    // do temp compensation if enabled
-    if (_temp_comp && _temp_meas != NAN) {
-        int32_t corrected = nearbyintf(_temp_coeff * _temp_meas + _pos_target);
-        target = constrain(corrected, _pos_min, _pos_max);
-        
-    } else {
-        target = _pos_target;
-    }
-
-    // move to target
-    _stepper->moveTo(target);
 }
 
-void SafetyMonitor::zero()
-{
-    // set homing speed
-    _stepper->runBackward();
-    
-    // wait til hit endstop
-    while(_stepper->isRunning())
-        delay(10);
-    
-    // move forward to reset endstop
-    move( 1.5 * _steps_per_mm);
-
-    // move back once more, slower for better precision
-    _stepper->setSpeedInUs(1000000/(_speed * _steps_per_mm)/4);
-    move(-2.0 * _steps_per_mm);
-    while(_stepper->isRunning())
-        delay(10);
-    // reset speed to normal after zeroing is done
-    _zeroed = true;
-    _stepper->setSpeedInUs(1000000/(_speed * _steps_per_mm));
-}
 
 void SafetyMonitor::aReadJson(JsonObject &root)
 {
     AlpacaSafetyMonitor::aReadJson(root);
     if(JsonObject obj_config = root[F("Configuration")]) {
-        _pos_min        = obj_config[F("Position_min")] | _pos_min;
-        _pos_max        = obj_config[F("Position_max")] | _pos_max;
-        _backlash       = obj_config[F("Backlash")] | _backlash;
-        _inverted       = obj_config[F("Inverted")] | _inverted;
-        _steps_per_mm   = obj_config[F("Stepsize")] | _steps_per_mm;
-        _speed          = obj_config[F("Max speed")] | _speed;
-        _acceleration   = obj_config[F("Acceleration")] | _acceleration;
-        _temp_coeff     = obj_config[F("Temp_coeffecient")] | _temp_coeff;
-        _temp_comp      = obj_config[F("Temp_compensation")] | _temp_comp;
+        limit_tamb  = obj_config[F("Freezing_Temperature")] | limit_tamb;
+        limit_tsky  = obj_config[F("Cloudy_SkyTemperature")] | limit_tsky;
+        limit_humid = obj_config[F("Humidity_limit")] | limit_humid;
+        limit_dew   = obj_config[F("Dew_delta_Temperature")] | limit_dew;
+        delay2open  = obj_config[F("Delay_to_Open")] | delay2open;
+        delay2close = obj_config[F("Delay_to_Close")] | delay2close;
     }
-    _pos_target = root[F("State")][F("Target_position")] | _pos_target;
+    status_roof = root[F("State")][F("Safety Monitor Status")] | status_roof;
 }
 
 void SafetyMonitor::aWriteJson(JsonObject &root)
@@ -127,17 +41,160 @@ void SafetyMonitor::aWriteJson(JsonObject &root)
     AlpacaSafetyMonitor::aWriteJson(root);
     // read-only values marked with #
     JsonObject obj_config = root.createNestedObject(F("Configuration"));
-    obj_config[F("Position_min")] = _pos_min;
-    obj_config[F("Position_max")] = _pos_max;
-    obj_config[F("Backlash")]     =_backlash;
-    obj_config[F("Inverted")]     = _inverted;
-    obj_config[F("Stepsize")]  = _steps_per_mm;
-    obj_config[F("Max_speed")]    = _speed;
-    obj_config[F("Acceleration")] = _acceleration;
-    obj_config[F("Temp_coeffecient")]   = _temp_coeff;
-    obj_config[F("Temp_compensation")]    = _temp_comp;
+    obj_config[F("Freezing_Temperature")]    = limit_tamb;
+    obj_config[F("Cloudy_SkyTemperature")]  = limit_tsky;
+    obj_config[F("Humidity_limit")]          = limit_humid;
+    obj_config[F("Dew_delta_Temperature")]   = limit_dew;
+    obj_config[F("Delay_to_Open")]           = delay2open;
+    obj_config[F("Delay_to_Close")]          = delay2close;
+
     JsonObject obj_state  = root.createNestedObject(F("State"));
-    obj_state[F("Target_position")]       = _pos_target;
-    obj_state[F("Current_position")]    = _stepper->getCurrentPosition();
-    obj_state[F("Temperature")]   = _temp_meas;
+    obj_state[F("Ambient_Temperature")]    = bme_temperature;
+    obj_state[F("Sky_Temperature ")]       = tempsky;
+    obj_state[F("Humidity")]               = bme_humidity;
+    obj_state[F("Pressure")]               = bme_pressure;
+    obj_state[F("Time_to_open")]           = time2open;
+    obj_state[F("Time_to_close")]          = time2close;
+    obj_state[F("Safety_Monitor_status")]  = status_roof;
 }
+
+/*
+float limit_tamb = 0.;     // freezing below this
+float limit_tsky = -15.;   // cloudy above this
+float limit_humid = 90.;   // risk for electronics above this
+float limit_dew = 5.;      // risk for optics with temp - dewpoint below this
+float delay2open = 1200.;   // waiting time before open roof after a safety close
+float delay2close = 120.;   // waiting time before close roof with continuos overall safety waring for this
+*/
+
+
+void setup_i2cmlxbme()
+{
+  Wire.end();                  // Set I2C pinout
+  Wire.setPins(SDApin,SCLpin);  
+  Wire.begin();
+  mlx.begin();                 // Initialize sensors
+  bme.begin(0x76);
+}
+
+float cb_avg_calc(){
+  int sum = 0;
+  for (int i = 0; i < CB_SIZE; i++) sum += cb[i];
+  return ((float) sum) / CB_SIZE;
+}
+
+float cb_rms_calc(){
+  int sum = 0;
+  for (int i = 0; i < CB_SIZE; i++) sum += cb[i]*cb[i];
+  return sqrt(sum/CB_SIZE);
+}
+
+void cb_add(float value){
+  cb[cb_index] = value;
+  cb_avg = cb_avg_calc();
+  cb_rms = cb_rms_calc();
+  cb_noise[cb_index] = abs(value)-cb_rms;    
+  cb_index++;
+  if (cb_index == CB_SIZE) cb_index = 0;
+}
+
+float cb_noise_db_calc(){
+  float n = 0;
+  for (int i = 0; i < CB_SIZE; i++){
+    n += cb_noise[i]*cb_noise[i];
+  }
+  if (n == 0) return 0;
+  return (10*log10(n));
+}
+
+float cb_snr_calc(){
+  float s,n = 0;
+  for (int i = 0; i < CB_SIZE; i++){
+    s += cb[i]*cb[i];
+    n += cb_noise[i]*cb_noise[i];
+  }
+  if (n == 0) return 0;
+  return (10*log10(s/n));
+}
+
+float tsky_calc(float ts, float ta){
+  float t67,td = 0;
+  if (abs(k[2]/10.-ta) < 1) {
+    t67=sgn(k[6])*sgn(ta-k[2]/10.) * abs((k[2]/10. - ta));
+  } else {
+    t67=k[6]*sgn(ta-k[2]/10.)*(log(abs((k[2]/10-ta)))/log(10.) + k[7]/100);
+  }
+  td = (k[1]/100.)*(ta-k[2]/10.)+(k[3]/100.)*pow(exp(k[4]/1000.*ta),(k[5]/100.))+t67;
+  return (ts-td);
+}
+
+float dewpoint_calc(float temp, float humid){
+  return (temp -((100-humid)/5.));
+}
+
+void update_i2cmlxbme(unsigned long measureDelay){
+  bme_temperature = bme.readTemperature();
+  bme_humidity    = bme.readHumidity();
+  bme_pressure    = bme.readPressure()/ 100.0F;
+  mlx_tempamb     = mlx.readAmbientTempC();
+  mlx_tempobj     = mlx.readObjectTempC();
+  tempsky     = tsky_calc(mlx_tempobj, mlx_tempamb);
+  cb_add(tempsky);   // add tempsky value to circular buffer and calculate  Turbulence (noise dB) / Seeing estimation
+  noise_db    = cb_noise_db_calc();
+  dewpoint    = dewpoint_calc(bme_temperature, bme_humidity);
+  
+// RULES    status true means SAFE!  false means UNSAFE!
+  if (mlx_tempamb > limit_tamb){
+    status_tamb = true;
+  }else{
+    status_tamb = false;    
+  }
+  if (bme_humidity < limit_humid){
+    status_humid = true;
+  }else{
+    status_humid = false;    
+  }
+  if (tempsky < limit_tsky){
+    status_tsky = true;
+  }else{
+    status_tsky = false;    
+  }
+  if ((mlx_tempamb - dewpoint) > limit_dew){
+    status_dew = true;
+  }else{
+    status_dew = false;    
+  }
+  if (status_tamb && status_humid && status_tsky && status_dew){
+    instant_status = true;
+  }else{
+    instant_status = false;
+  }
+  if (instant_status == false){
+    if (status_weather == true) Serial.println("Unsafe received");
+    time2open = delay2open;
+    status_weather = false;
+    if (status_roof == true){
+      if (time2close == 0.) {
+        status_roof = false;
+        Serial.println("Close Roofs");
+        digitalWrite(ROOFpin, LOW);
+      }
+    }
+  }
+  if (instant_status == true){
+    if (status_weather == false) Serial.println("Safe received");
+    time2close = delay2close;
+    status_weather = true;
+    if (status_roof == false){
+      if (time2open == 0.) {
+        status_roof = true;
+        Serial.println("Open Roofs");
+        digitalWrite(ROOFpin, HIGH);
+      }
+    }
+  }
+  time2open -= measureDelay/1000;
+  if (time2open < 0.) time2open = 0;
+  time2close -= measureDelay/1000;
+  if (time2close < 0.) time2close = 0;
+};
