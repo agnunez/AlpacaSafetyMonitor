@@ -39,7 +39,7 @@ class SafetyMonitor : public AlpacaSafetyMonitor {
 
     public:
         SafetyMonitor()  : AlpacaSafetyMonitor()
-        { _safetymonitor_index = _n_safetymonitors++; }
+        { _safetymonitor_index = _n_safetymonitors++; } 
         bool begin();
         void update();
 
