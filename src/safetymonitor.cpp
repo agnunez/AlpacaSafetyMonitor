@@ -7,12 +7,13 @@ Adafruit_MLX90614 mlx = Adafruit_MLX90614();
 
 // cannot call member functions directly from interrupt, so need these helpers for up to 1 SafetyMonitor
 uint8_t SafetyMonitor::_n_safetymonitors = 0;
-SafetyMonitor *SafetyMonitor::_safetymonitor_array[1] = { nullptr };
+SafetyMonitor *SafetyMonitor::_safetymonitor_array[4] = { nullptr,  nullptr, nullptr,  nullptr };
 
 bool SafetyMonitor::begin()
 {
 
     // done
+    _safetymonitor_array[_safetymonitor_index] = this;
     return true;
 }
 
@@ -173,6 +174,7 @@ void update_i2cmlxbme(unsigned long measureDelay){
     if (status_weather == true) Serial.println("Unsafe received");
     time2open = delay2open;
     status_weather = false;
+    _issafe = false;
     if (status_roof == true){
       if (time2close == 0.) {
         status_roof = false;
@@ -185,6 +187,7 @@ void update_i2cmlxbme(unsigned long measureDelay){
     if (status_weather == false) Serial.println("Safe received");
     time2close = delay2close;
     status_weather = true;
+    _issafe = true;
     if (status_roof == false){
       if (time2open == 0.) {
         status_roof = true;

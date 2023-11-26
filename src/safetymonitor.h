@@ -20,6 +20,7 @@ static float delay2open = 1200.;   // waiting time before open roof after a safe
 static float delay2close = 120.;   // waiting time before close roof with continuos overall safety waring for this
 static float time2open, time2close;
 static bool  status_tamb, status_tsky, status_humid, status_dew, status_weather, instant_status, status_roof;
+static bool _issafe = false;
 
 // Circular buffer functions
 #define CB_SIZE 24
@@ -33,9 +34,9 @@ static float cb_rms       = 0.0;
 class SafetyMonitor : public AlpacaSafetyMonitor {
     private:
         static uint8_t _n_safetymonitors;
-        static SafetyMonitor *_safetymonitor_array[1];
+        static SafetyMonitor *_safetymonitor_array[4];
         uint8_t _safetymonitor_index;
-        bool _issafe = false;
+        
 
     public:
         SafetyMonitor()  : AlpacaSafetyMonitor()
@@ -44,7 +45,7 @@ class SafetyMonitor : public AlpacaSafetyMonitor {
         void update();
 
         // alpaca getters
-        void aGetIsSafe(AsyncWebServerRequest *request)  { _alpacaServer->respond(request, status_roof); }
+        void aGetIsSafe(AsyncWebServerRequest *request)  { _alpacaServer->respond(request, (_issafe ? "True" : "False")); }
 
         // alpaca setters
 

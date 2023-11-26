@@ -1,7 +1,7 @@
 #pragma once
 // General
 #define DEVICENAME          "AlpacaESP32driver"
-#define VERSION             "v1.0.0"
+#define VERSION             "v1.1.0"
 #define COPYRIGHT           "2021 Njål Brekke & @agnuca"
 #define FOCUSER2_ENABLE     false
 #define SAFETYMONITOR2_ENABLE     false
