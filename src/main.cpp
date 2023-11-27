@@ -48,7 +48,7 @@ void setup() {
   // setup ASCOM Alpaca server
   alpacaServer.begin(ALPACA_UDP_PORT, ALPACA_TCP_PORT);
   //alpacaServer.debug;   // uncoment to get Server messages in Serial monitor
-  
+
   // add devices
   for(uint8_t i=0; i<N_FOCUSERS; i++) {
     focuser[i].begin();
@@ -74,7 +74,7 @@ void loop() {
   update_focus();
   if (millis() > lastTimeRan + measureDelay)  {   // read every measureDelay without blocking Webserver
     update_i2cmlxbme(measureDelay);
-    Serial.print(F("\n# updatei2c sensors"));
+    //Serial.print(F("\n# updatei2c sensors"));
     lastTimeRan = millis();
   }
 
