@@ -45,8 +45,8 @@ class SafetyMonitor : public AlpacaSafetyMonitor {
         void update();
 
         // alpaca getters
-        void aGetIsSafe(AsyncWebServerRequest *request)  { _alpacaServer->respond(request, (_issafe ? "True" : "False")); }
-
+        void aGetIsSafe(AsyncWebServerRequest *request)  { _alpacaServer->respond(request,  (_issafe ? "true" : "false" )); }
+    
         // alpaca setters
 
         // alpaca json

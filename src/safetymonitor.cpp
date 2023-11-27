@@ -174,10 +174,10 @@ void update_i2cmlxbme(unsigned long measureDelay){
     if (status_weather == true) Serial.println("Unsafe received");
     time2open = delay2open;
     status_weather = false;
-    _issafe = false;
     if (status_roof == true){
       if (time2close == 0.) {
         status_roof = false;
+        _issafe = false;
         Serial.println("Close Roofs");
         digitalWrite(ROOFpin, LOW);
       }
@@ -187,10 +187,10 @@ void update_i2cmlxbme(unsigned long measureDelay){
     if (status_weather == false) Serial.println("Safe received");
     time2close = delay2close;
     status_weather = true;
-    _issafe = true;
     if (status_roof == false){
       if (time2open == 0.) {
         status_roof = true;
+        _issafe = true;
         Serial.println("Open Roofs");
         digitalWrite(ROOFpin, HIGH);
       }
