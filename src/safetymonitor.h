@@ -1,17 +1,12 @@
 #pragma once
 #include <Arduino.h>
 #include "config.h"
+#include "shared_variables.h"
 #include "AlpacaSafetyMonitor.h" 
-#include <Wire.h>
-#include <Adafruit_MLX90614.h>
-#include <Adafruit_BME280.h>
 
 
 
 // mlx static and float variables
-#define sgn(x) ((x) < 0 ? -1 : ((x) > 0 ? 1 : 0))          // missing math function sign of number
-static float k[] = {0., 33., 0., 4., 100., 100., 0., 0.};  // sky temperature corrections polynomial coefficients
-static float bme_temperature, bme_humidity, bme_pressure, mlx_tempamb, mlx_tempobj, tempsky, noise_db, dewpoint;
 static float limit_tamb = 0.;     // freezing below this
 static float limit_tsky = 30.; //-15.;   // cloudy above this
 static float limit_humid = 90.;   // risk for electronics above this
