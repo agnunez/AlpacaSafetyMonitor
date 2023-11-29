@@ -15,6 +15,7 @@
 #include "focuser.h"
 #include "safetymonitor.h"
 #include "AlpacaServer.h"
+#include "meteo.h"
 
 // encoder global variables
 bool encA, encB;
@@ -30,7 +31,7 @@ static unsigned long lastTimeRan;           // a
 void setup_wifi();
 void setup_encoder();
 void setup_sensors();
-void setup_i2cmlxbme();
+//void setup_i2cmlxbme();
 
 // module housekeeping
 void update_encoder();
@@ -41,4 +42,6 @@ void update_i2cmlxbme(unsigned long measureDelay);
 // interrupt routines
 void ICACHE_RAM_ATTR encoderA_isr();
 void ICACHE_RAM_ATTR encoderB_isr();
+
+Meteo meteo1("AlpacaESP32");
 

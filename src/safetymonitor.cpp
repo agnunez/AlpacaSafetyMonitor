@@ -1,8 +1,9 @@
 #include "safetymonitor.h"
-
+#include "meteo.h"
+/*
 Adafruit_BME280 bme;  // I2C
 Adafruit_MLX90614 mlx = Adafruit_MLX90614();
-
+*/
 // todo: set update() to private and only run when needed
 
 // cannot call member functions directly from interrupt, so need these helpers for up to 1 SafetyMonitor
@@ -59,16 +60,9 @@ void SafetyMonitor::aWriteJson(JsonObject &root)
     obj_state[F("Safety_Monitor_status")]  = status_roof;
 }
 
+
+
 /*
-float limit_tamb = 0.;     // freezing below this
-float limit_tsky = -15.;   // cloudy above this
-float limit_humid = 90.;   // risk for electronics above this
-float limit_dew = 5.;      // risk for optics with temp - dewpoint below this
-float delay2open = 1200.;   // waiting time before open roof after a safety close
-float delay2close = 120.;   // waiting time before close roof with continuos overall safety waring for this
-*/
-
-
 void setup_i2cmlxbme()
 {
   Wire.end();                  // Set I2C pinout
@@ -77,6 +71,7 @@ void setup_i2cmlxbme()
   mlx.begin();                 // Initialize sensors
   bme.begin(0x76);
 }
+*/
 
 float cb_avg_calc(){
   int sum = 0;
@@ -117,7 +112,7 @@ float cb_snr_calc(){
   if (n == 0) return 0;
   return (10*log10(s/n));
 }
-
+/*
 float tsky_calc(float ts, float ta){
   float t67,td = 0;
   if (abs(k[2]/10.-ta) < 1) {
@@ -133,6 +128,7 @@ float dewpoint_calc(float temp, float humid){
   return (temp -((100-humid)/5.));
 }
 
+
 void update_i2cmlxbme(unsigned long measureDelay){
   bme_temperature = bme.readTemperature();
   bme_humidity    = bme.readHumidity();
@@ -143,7 +139,7 @@ void update_i2cmlxbme(unsigned long measureDelay){
   cb_add(tempsky);   // add tempsky value to circular buffer and calculate  Turbulence (noise dB) / Seeing estimation
   noise_db    = cb_noise_db_calc();
   dewpoint    = dewpoint_calc(bme_temperature, bme_humidity);
-  
+
 // RULES    status true means SAFE!  false means UNSAFE!
   if (mlx_tempamb > limit_tamb){
     status_tamb = true;
@@ -201,3 +197,4 @@ void update_i2cmlxbme(unsigned long measureDelay){
   time2close -= measureDelay/1000;
   if (time2close < 0.) time2close = 0;
 };
+*/

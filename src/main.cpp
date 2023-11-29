@@ -65,7 +65,10 @@ void setup() {
 
   setup_encoder();
   setup_sensors();
-  setup_i2cmlxbme();
+  //setup_i2cmlxbme();
+  
+  meteo1._issafe = false;
+  meteo1.setup_i2cmlxbme(SDApin,SCLpin,0);
 }
 
 void loop() {
@@ -73,7 +76,7 @@ void loop() {
   update_sensors();
   update_focus();
   if (millis() > lastTimeRan + measureDelay)  {   // read every measureDelay without blocking Webserver
-    update_i2cmlxbme(measureDelay);
+    meteo1.update_i2cmlxbme(measureDelay);
     //Serial.print(F("\n# updatei2c sensors"));
     lastTimeRan = millis();
   }

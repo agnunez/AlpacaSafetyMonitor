@@ -1,11 +1,12 @@
 #pragma once
 #include <Arduino.h>
 #include "config.h"
-#include "AlpacaSafetyMonitor.h" 
+#include "AlpacaSafetyMonitor.h"
+/* 
 #include <Wire.h>
 #include <Adafruit_MLX90614.h>
 #include <Adafruit_BME280.h>
-
+*/
 
 
 // mlx static and float variables
