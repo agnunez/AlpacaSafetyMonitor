@@ -71,7 +71,6 @@ void setup_i2cmlxbme()
   mlx.begin();                 // Initialize sensors
   bme.begin(0x76);
 }
-*/
 
 float cb_avg_calc(){
   int sum = 0;
