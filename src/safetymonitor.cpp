@@ -18,10 +18,71 @@ bool SafetyMonitor::begin()
     return true;
 }
 
-void SafetyMonitor::update()
-{
-    int target;
-}
+void SafetyMonitor::update(Meteo meteo, unsigned long measureDelay) {
+  //  update meteo
+  temperature = meteo.bme_temperature;
+  humidity = meteo.bme_humidity;
+  pressure = meteo.bme_pressure;
+  dewpoint = meteo.dewpoint;
+  tempsky = meteo.tempsky;
+
+  if (temperature > limit_tamb){
+    status_tamb = true;
+  }else{
+    status_tamb = false;    
+  }
+  if (humidity < limit_humid){
+    status_humid = true;
+  }else{
+    status_humid = false;    
+  }
+  if (tempsky < limit_tsky){
+    status_tsky = true;
+  }else{
+    status_tsky = false;    
+  }
+  if ((temperature - dewpoint) > limit_dew){
+    status_dew = true;
+  }else{
+    status_dew = false;    
+  }
+  if (status_tamb && status_humid && status_tsky && status_dew){
+    instant_status = true;
+  }else{
+    instant_status = false;
+  }
+  if (instant_status == false){
+    if (status_weather == true) Serial.println("Unsafe received");
+    time2open = delay2open;
+    status_weather = false;
+    if (status_roof == true){
+      if (time2close == 0.) {
+        status_roof = false;
+        _issafe = false;
+        Serial.println("Close Roofs");
+        digitalWrite(ROOFpin, LOW);
+      }
+    }
+  }
+  if (instant_status == true){
+    if (status_weather == false) Serial.println("Safe received");
+    time2close = delay2close;
+    status_weather = true;
+    if (status_roof == false){
+      if (time2open == 0.) {
+        status_roof = true;
+        _issafe = true;
+        Serial.println("Open Roofs");
+        digitalWrite(ROOFpin, HIGH);
+      }
+    }
+  }
+  time2open -= measureDelay/1000;
+  if (time2open < 0.) time2open = 0;
+  time2close -= measureDelay/1000;
+  if (time2close < 0.) time2close = 0;
+};
+
 
 
 void SafetyMonitor::aReadJson(JsonObject &root)
@@ -51,10 +112,10 @@ void SafetyMonitor::aWriteJson(JsonObject &root)
     obj_config[F("Delay_to_Close")]          = delay2close;
 
     JsonObject obj_state  = root.createNestedObject(F("State"));
-    obj_state[F("Ambient_Temperature")]    = bme_temperature;
+    obj_state[F("Ambient_Temperature")]    = temperature ;
     obj_state[F("Sky_Temperature ")]       = tempsky;
-    obj_state[F("Humidity")]               = bme_humidity;
-    obj_state[F("Pressure")]               = bme_pressure;
+    obj_state[F("Humidity")]               = humidity;
+    obj_state[F("Pressure")]               = pressure;
     obj_state[F("Time_to_open")]           = time2open;
     obj_state[F("Time_to_close")]          = time2close;
     obj_state[F("Safety_Monitor_status")]  = status_roof;

@@ -12,6 +12,12 @@
 #include <OneWire.h>
 #include <DallasTemperature.h>
 
+// mlx & bme
+#include <Wire.h>
+#include <Adafruit_MLX90614.h>
+#include <Adafruit_BME280.h>
+
+
 #include "focuser.h"
 #include "safetymonitor.h"
 #include "AlpacaServer.h"

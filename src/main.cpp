@@ -39,6 +39,9 @@ WiFiClient tcpClient;
 
 AlpacaServer alpacaServer("Alpaca_ESP32");
 
+Adafruit_BME280 bme;  // I2C
+Adafruit_MLX90614 mlx = Adafruit_MLX90614();
+
 void setup() {
   // setup serial
   Serial.begin(115200, SERIAL_8N1);
@@ -67,8 +70,22 @@ void setup() {
   setup_sensors();
   //setup_i2cmlxbme();
   
-  meteo1._issafe = false;
-  meteo1.setup_i2cmlxbme(SDApin,SCLpin,0);
+
+  //meteo1._issafe = false;
+  //meteo1.setup_i2cmlxbme(SDApin,SCLpin,0x76);
+  Wire.end();                  // Set I2C pinout
+  Wire.setPins(SDApin,SCLpin);  
+  Wire.begin();
+  mlx.begin();                 // Initialize sensors
+  bme.begin(bme_i2caddress);
+}
+
+void read_mlx_bme(){
+  meteo1.bme_temperature = bme.readTemperature();
+  meteo1.bme_humidity    = bme.readHumidity();
+  meteo1.bme_pressure    = bme.readPressure()/ 100.0F;
+  meteo1.mlx_tempamb     = mlx.readAmbientTempC();
+  meteo1.mlx_tempobj     = mlx.readObjectTempC();
 }
 
 void loop() {
@@ -76,13 +93,17 @@ void loop() {
   update_sensors();
   update_focus();
   if (millis() > lastTimeRan + measureDelay)  {   // read every measureDelay without blocking Webserver
+    read_mlx_bme();
     meteo1.update_i2cmlxbme(measureDelay);
-    //Serial.print(F("\n# updatei2c sensors"));
+    safetymonitor[0].update(meteo1,measureDelay);
+    Serial.print(F("\n# update meteo1 & safetymonitors"));
     lastTimeRan = millis();
   }
 
   delay(50); 
 }
+
+
 
 void setup_wifi()
 {
