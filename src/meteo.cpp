@@ -1,19 +1,21 @@
 #include "meteo.h"
 
+Adafruit_BME280 bme;  // I2C
+Adafruit_MLX90614 mlx = Adafruit_MLX90614();
+
 Meteo::Meteo(const std::string& newName) :  Name(newName) { }
 
 const std::string& Meteo::getName() const {
     return Name;
 }
-/*
-void Meteo::setup_i2cmlxbme(int sdapin, int sclpin, int i2caddress) {
+
+void Meteo::setup_i2cmlxbme() {
     Wire.end();                  // Set I2C pinout
-    Wire.setPins(sdapin,sclpin);  
+    Wire.setPins(SDApin,SCLpin);  
     Wire.begin();
     mlx.begin();                 // Initialize sensors
-    bme.begin(i2caddress);
-}
-*/
+    bme.begin(0x76);
+}  
 
 #define sgn(x) ((x) < 0 ? -1 : ((x) > 0 ? 1 : 0))  
 
@@ -30,13 +32,14 @@ float tsky_calc(float ts, float ta){
 }
 
 void Meteo::update_i2cmlxbme(unsigned long measureDelay){
-  /*
+  Serial.print(F("# update meteo1 & safetymonitors\n"));
+
   bme_temperature = bme.readTemperature();
   bme_humidity    = bme.readHumidity();
   bme_pressure    = bme.readPressure()/ 100.0F;
   mlx_tempamb     = mlx.readAmbientTempC();
   mlx_tempobj     = mlx.readObjectTempC();
-  */
+
   dewpoint        = bme_temperature - (100-bme_humidity)/5.;
   tempsky         = tsky_calc(mlx_tempobj, mlx_tempamb);
   //cb_add(tempsky);   // add tempsky value to circular buffer and calculate  Turbulence (noise dB) / Seeing estimation

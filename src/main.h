@@ -12,12 +12,6 @@
 #include <OneWire.h>
 #include <DallasTemperature.h>
 
-// mlx & bme
-#include <Wire.h>
-#include <Adafruit_MLX90614.h>
-#include <Adafruit_BME280.h>
-
-
 #include "focuser.h"
 #include "safetymonitor.h"
 #include "AlpacaServer.h"
@@ -37,7 +31,6 @@ static unsigned long lastTimeRan;           // a
 void setup_wifi();
 void setup_encoder();
 void setup_sensors();
-//void setup_i2cmlxbme();
 
 // module housekeeping
 void update_encoder();
