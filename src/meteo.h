@@ -6,6 +6,14 @@
 #include <Adafruit_MLX90614.h>
 #include <Adafruit_BME280.h>
 
+// Circular buffer functions
+#define CB_SIZE 24
+static float cb[CB_SIZE] = {0.};
+static float cb_noise[CB_SIZE] = {0.};
+static int   cb_index     = 0;
+static float cb_avg       = 0.0;
+static float cb_rms       = 0.0;
+
 #ifndef METEO_H
 #define METEO_H
 
