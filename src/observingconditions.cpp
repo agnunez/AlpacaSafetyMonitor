@@ -24,6 +24,7 @@ void ObservingConditions::update(Meteo meteo, unsigned long measureDelay) {
   noise_db = meteo.noise_db;
   cloudcover = meteo.cloudcover;
   skyquality = meteo.skyquality;
+  skybrightness = meteo.skybrightness;
 };
 
 
@@ -55,6 +56,7 @@ void ObservingConditions::aWriteJson(JsonObject &root)
     obj_state[F("Turbulence_db")]          = noise_db;   // not exactly seeing (fwhm)
     obj_state[F("Cloud_Cover")]            = cloudcover;  
     obj_state[F("Sky_Quality")]            = skyquality; 
+    obj_state[F("Sky_Brightness")]         = skybrightness; 
 
 }
 

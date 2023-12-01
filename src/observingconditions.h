@@ -26,16 +26,15 @@ class ObservingConditions : public AlpacaObservingConditions {
         void aGetSkyBrightness(AsyncWebServerRequest *request)  { _alpacaServer->respond(request,  skybrightness); }
         void aGetSkyTemperature(AsyncWebServerRequest *request)  { _alpacaServer->respond(request, tempsky); }
         void aGetSkyQuality(AsyncWebServerRequest *request)  { _alpacaServer->respond(request, skyquality); }
-        void aGetStarFwhm(AsyncWebServerRequest *request)  { _alpacaServer->respond(request,  temperature); }
-        void aGetTemperature(AsyncWebServerRequest *request)  { _alpacaServer->respond(request,  noise_db); }
+        void aGetStarFwhm(AsyncWebServerRequest *request)  { _alpacaServer->respond(request,  noise_db); }
+        void aGetTemperature(AsyncWebServerRequest *request)  { _alpacaServer->respond(request,  temperature); }
         void aGetWindDirection(AsyncWebServerRequest *request)  { _alpacaServer->respond(request,  winddir); }
         void aGetWindGust(AsyncWebServerRequest *request)  { _alpacaServer->respond(request,  windgust); }
         void aGetWindSpeed(AsyncWebServerRequest *request)  { _alpacaServer->respond(request,  windspeed); }
         void aGetSensorDescription(AsyncWebServerRequest *request)  { _alpacaServer->respond(request,  sensordescription); }
         void aGetTimeSinceLastUpdate(AsyncWebServerRequest *request)  { _alpacaServer->respond(request,  timelastupdate); }
         void aGetAveragePeriod(AsyncWebServerRequest *request)  { _alpacaServer->respond(request,  _avgperiod); }
-        void aGetRainRate(AsyncWebServerRequest *request)  { _alpacaServer->respond(request,  skybrightness); }
-        void aGetSkyBrightness(AsyncWebServerRequest *request)  { _alpacaServer->respond(request,  rainrate); }
+        void aGetRainRate(AsyncWebServerRequest *request)  { _alpacaServer->respond(request,  rainrate); }
         void aGetCloudCover(AsyncWebServerRequest *request)  { _alpacaServer->respond(request,  cloudcover); }
     
         // alpaca setters
