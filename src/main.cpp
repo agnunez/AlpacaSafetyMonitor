@@ -13,6 +13,23 @@ SafetyMonitor safetymonitor[N_SAFETYMONITORS] = {
 #endif
 };
 
+
+#if OBSERVINGCONDITIONS2_ENABLE
+  #define N_OBSERVINGCONDITIONSS 2
+#else
+  #define N_OBSERVINGCONDITIONSS 1
+#endif
+
+ObservingConditions observingconditions[N_OBSERVINGCONDITIONSS] = {
+  ObservingConditions()
+#if OBSERVINGCONDITIONS2_ENABLE
+  ,ObservingConditions()
+#endif
+};
+
+
+
+
 WiFiServer tcpServer(TCP_PORT);
 WiFiClient tcpClient;
 
@@ -36,6 +53,11 @@ void setup() {
     safetymonitor[i].begin();
     alpacaServer.addDevice(&safetymonitor[i]);
   }
+
+  for(uint8_t i=0; i<N_OBSERVINGCONDITIONSS; i++) {
+    observingconditions[i].begin();
+    alpacaServer.addDevice(&observingconditions[i]);
+  }
   
   
   // load settings
@@ -48,6 +70,7 @@ void loop() {
   if (millis() > lastTimeRan + measureDelay)  {   // read every measureDelay without blocking Webserver
     meteo1.update_i2cmlxbme(measureDelay);
     safetymonitor[0].update(meteo1,measureDelay);
+    observingconditions[0].update(meteo1,measureDelay);
     lastTimeRan = millis();
   }
   delay(50); 

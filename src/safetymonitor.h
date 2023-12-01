@@ -1,6 +1,7 @@
 #pragma once
 #include <Arduino.h>
 #include "config.h"
+#include "pins.h"
 #include "AlpacaSafetyMonitor.h"
 #include "meteo.h"
 
@@ -26,11 +27,7 @@ class SafetyMonitor : public AlpacaSafetyMonitor {
         void update(Meteo meteo, unsigned long measureDelay);
 
         // alpaca getters
-        void aGetIsSafe(AsyncWebServerRequest *request)  { 
-            _alpacaServer->respond(request,  _issafe);  
-            Serial.print("_issafe: ");
-            Serial.println (_issafe);
-        }
+        void aGetIsSafe(AsyncWebServerRequest *request)  {  _alpacaServer->respond(request,  _issafe);  }
     
         // alpaca setters
 

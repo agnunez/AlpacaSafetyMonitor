@@ -24,6 +24,5 @@
 #define bme_i2caddress 0x76
 
 
-// Roof pinout
-#define ROOFpin 4
+
 

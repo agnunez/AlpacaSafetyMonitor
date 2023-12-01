@@ -27,3 +27,6 @@
 
 // LEDS
 #define PIN_WIFI_LED  23
+
+// Roof pinout
+#define ROOFpin 4

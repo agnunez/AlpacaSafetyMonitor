@@ -86,5 +86,7 @@ void Meteo::update_i2cmlxbme(unsigned long measureDelay){
   tempsky         = tsky_calc(mlx_tempobj, mlx_tempamb);
   cb_add(tempsky);   // add tempsky value to circular buffer and calculate  Turbulence (noise dB) / Seeing estimation
   noise_db        = cb_noise_db_calc();
-  
+  cloudcover      = 100.+(tempsky*6.);
+  if (cloudcover>100.) cloudcover = 100.;
+  if (cloudcover<0.) cloudcover = 0.;
 }

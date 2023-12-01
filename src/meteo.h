@@ -22,7 +22,7 @@ class Meteo {
 public:
     // attributes
 	std::string Name;
-	float bme_temperature, bme_humidity, bme_pressure, mlx_tempamb, mlx_tempobj, tempsky, noise_db, dewpoint;
+	float bme_temperature, bme_humidity, bme_pressure, mlx_tempamb, mlx_tempobj, tempsky, noise_db, dewpoint, cloudcover, skyquality;
     // sensors
     // methods
     void update_i2cmlxbme(unsigned long measureDelay);
@@ -33,6 +33,7 @@ public:
     bool getIssafe() const;
 	const std::string& getName() const;
     void setup_i2cmlxbme();
+
 };
 
 #endif
