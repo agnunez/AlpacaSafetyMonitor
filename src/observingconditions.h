@@ -23,7 +23,7 @@ class ObservingConditions : public AlpacaObservingConditions {
         void aGetDewPoint(AsyncWebServerRequest *request)  { _alpacaServer->respond(request,  dewpoint); }
         void aGetHumidity(AsyncWebServerRequest *request)  { _alpacaServer->respond(request,  humidity); }
         void aGetPressure(AsyncWebServerRequest *request)  { _alpacaServer->respond(request,  pressure); }
-        void SkyBrightness(AsyncWebServerRequest *request)  { _alpacaServer->respond(request,  skybrightness); }
+        void aGetSkyBrightness(AsyncWebServerRequest *request)  { _alpacaServer->respond(request,  skybrightness); }
         void aGetSkyTemperature(AsyncWebServerRequest *request)  { _alpacaServer->respond(request, tempsky); }
         void aGetSkyQuality(AsyncWebServerRequest *request)  { _alpacaServer->respond(request, skyquality); }
         void aGetStarFwhm(AsyncWebServerRequest *request)  { _alpacaServer->respond(request,  temperature); }
