@@ -2,7 +2,7 @@
 
 @agnuca
 
-This are an ObservingConditions and SafetyMonitor alpaca ascom drivers. (working stage)
+This are an ObservingConditions and SafetyMonitor alpaca ascom drivers. (work in progress stage)
 
 For Ascom Alpaca compability it uses AlpacaServerESP32 library (https://github.com/agnunez/AlpacaServerESP32.git)
 
@@ -14,6 +14,7 @@ Brief steps to install:
 - clone https://github.com/agnunez/AlpacaSafetyMonitor.git 
 - Check that platform.ini contains (or install libraries):
 
+``` 
 [env:esp32dev]
 platform = espressif32
 board = esp32doit-devkit-v1
@@ -27,6 +28,7 @@ lib_deps =
 	https://github.com/agnunez/AlpacaServerESP32.git
 	adafruit/Adafruit MLX90614 Library@^2.1.5
 	adafruit/Adafruit BME280 Library@^2.2.4
+```
 
 Click on Platform icon (left side)
 - Build
@@ -57,7 +59,7 @@ Enjoy!
 ASCOM Astronomy Programs Discovering Problems!!!
 ================================================
 
-There are serveral observatory programs that are not yet able to discover ASCOMO-ALPACA drivers. Follow these steps:
+There are serveral observatory programs that are not yet able to discover ASCOM-ALPACA drivers. Follow these steps:
 
 - install ASCOM latest version
 - install ASCOM Diagnostics program and execute 
@@ -70,7 +72,7 @@ There are serveral observatory programs that are not yet able to discover ASCOMO
 - Discover now
 - Deploy Select form and choos "NEW ALPACA DEVICE" and [OK]
 
-Close and use yoru software again to see if it discovers your Alpaca drivers.
+Close and use your software again to see if it discovers your Alpaca drivers.
 
 Enjoy!
 
