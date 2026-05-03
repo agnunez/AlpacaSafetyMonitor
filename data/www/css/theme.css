@@ -60,4 +60,27 @@ a.nav-link {
     content: url("/images/ascom.png");
     height: 92px;
     width: 92px;
-}​
+}
+
+/* Sensor health indicators */
+.badge-success { background-color: #28a745; }
+.badge-warning { background-color: #ffc107; color: #212529; }
+.badge-danger  { background-color: #dc3545; }
+
+/* Compact tables inside tabs */
+.tab-pane .table { margin-bottom: 0.5rem; font-size: 0.85rem; }
+.tab-pane .table td,
+.tab-pane .table th { padding: 0.25rem 0.5rem; vertical-align: middle; }
+
+/* Safety threshold cards */
+.tab-pane .card { border-color: var(--border); }
+.tab-pane .card .card-body { background-color: #fff; }
+.tab-pane .card h6 { margin-bottom: 0.4rem; color: var(--primary); }
+
+/* OTA progress bar */
+.progress { height: 1.2rem; }
+.progress-bar { font-size: 0.75rem; line-height: 1.2rem; background-color: var(--primary); }
+
+/* Tabs: allow wrapping on small screens */
+.nav-tabs { flex-wrap: wrap; }
+.nav-tabs .nav-link { font-size: 0.85rem; padding: 0.35rem 0.6rem; }​

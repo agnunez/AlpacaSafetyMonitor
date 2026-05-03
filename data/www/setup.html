@@ -1,77 +1,280 @@
 <!DOCTYPE html>
 <html>
-    <head>
-        <title>Alpaca Ascom Drivers Setup</title>
-        <meta charset="UTF-8">
-        <!-- Latest compiled and minified CSS -->
-        <link rel="stylesheet" href="/css/bootstrap.min.css">
-        <link rel="stylesheet" href="/css/jquery-ui.min.css">
-        <link rel="stylesheet" href="/css/theme.css">
+<head>
+    <title>Alpaca ESP32 Setup</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/css/jquery-ui.min.css">
+    <link rel="stylesheet" href="/css/theme.css">
+    <script src="/js/jquery.min.js"></script>
+    <script src="/js/jquery-ui.min.js"></script>
+    <script src="/js/bootstrap.min.js"></script>
+    <script src="/js/jsonFormer.jquery.js"></script>
+    <script src="/js/app.js"></script>
+</head>
+<body>
+<div class="container">
+    <div class="card mb-3 mt-3">
+        <div class="card-header">
+            <h4 class="mb-2">Alpaca ESP32 Observatory Setup</h4>
+            <ul class="nav nav-tabs card-header-tabs" id="main-tabs">
+                <li class="nav-item"><a class="nav-link active" data-toggle="tab" href="#tab-status">Status</a></li>
+                <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#tab-wifi">WiFi</a></li>
+                <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#tab-devices">Devices</a></li>
+                <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#tab-hardware">Hardware</a></li>
+                <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#tab-safety">Safety</a></li>
+                <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#tab-dome">Dome</a></li>
+                <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#tab-mqtt">MQTT</a></li>
+                <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#tab-ota">OTA</a></li>
+                <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#tab-backup">Backup</a></li>
+            </ul>
+        </div>
+        <div class="card-body">
+            <div class="tab-content">
 
-        <script src="/js/jquery.min.js"></script>
-        <script src="/js/jquery-ui.min.js"></script>
-        <script src="/js/bootstrap.min.js"></script>
-        <script src="/js/jsonFormer.jquery.js"></script>
-
-    </head>
-    <body>
-        <div class="container">
-            <div class="card mb-3 mt-3">
-                <div class="card-header">
-                    <div id="title"><H3>Alpaca Ascom Drivers Setup</H3></div>
-                    <ul id="nav-links" class="nav nav-tabs card-header-tabs">
-                    </ul>
+                <!-- STATUS TAB -->
+                <div class="tab-pane fade show active" id="tab-status">
+                    <h5>Sensor Status</h5>
+                    <div id="sensor-health" class="mb-3"></div>
+                    <h5>Safety State</h5>
+                    <div id="safety-status" class="mb-3"></div>
+                    <button class="btn btn-primary btn-sm" onclick="AlpacaApp.refreshStatus()">Refresh</button>
                 </div>
-            <div class="card-body">
-                <div id="form-container"></div>
-                <button type="button" id="json_refresh" class="btn btn-primary">Refresh</button>
-                <button type="button" id="json_update" class="btn btn-primary">Update</button>
-                <button type="button" id="json_save" class="btn btn-primary">Save</button>
+
+                <!-- WIFI TAB -->
+                <div class="tab-pane fade" id="tab-wifi">
+                    <h5>WiFi Status</h5>
+                    <div id="wifi-status" class="mb-3"></div>
+                    <h5>Stored Networks</h5>
+                    <div id="wifi-networks" class="mb-3"></div>
+                    <h5>Available Networks</h5>
+                    <button class="btn btn-primary btn-sm mb-2" onclick="AlpacaApp.scanWifi()">Scan</button>
+                    <div id="wifi-scan"></div>
+                    <hr>
+                    <h5>Add Network</h5>
+                    <div class="form-group row">
+                        <label class="col-sm-3 col-form-label">SSID</label>
+                        <div class="col-sm-9"><input type="text" class="form-control form-control-sm" id="wifi-ssid"></div>
+                    </div>
+                    <div class="form-group row">
+                        <label class="col-sm-3 col-form-label">Password</label>
+                        <div class="col-sm-9"><input type="password" class="form-control form-control-sm" id="wifi-pass"></div>
+                    </div>
+                    <button class="btn btn-primary btn-sm" onclick="AlpacaApp.connectWifi()">Connect & Save</button>
+                    <button class="btn btn-secondary btn-sm" onclick="AlpacaApp.startAP()">Start AP Mode</button>
+                </div>
+
+                <!-- DEVICES TAB (Alpaca device config via jsonFormer) -->
+                <div class="tab-pane fade" id="tab-devices">
+                    <ul id="device-links" class="nav nav-tabs mb-3"></ul>
+                    <div id="device-form-container"></div>
+                    <button type="button" class="btn btn-primary btn-sm" id="device-refresh">Refresh</button>
+                    <button type="button" class="btn btn-primary btn-sm" id="device-update">Update</button>
+                    <button type="button" class="btn btn-primary btn-sm" id="device-save">Save</button>
+                </div>
+
+                <!-- HARDWARE TAB -->
+                <div class="tab-pane fade" id="tab-hardware">
+                    <h5>Hardware Configuration</h5>
+                    <p class="text-muted small">Changes to I2C pins require reboot to take effect.</p>
+                    <div id="hw-form">
+                        <div class="form-group row">
+                            <label class="col-sm-4 col-form-label">Hostname</label>
+                            <div class="col-sm-8"><input type="text" class="form-control form-control-sm" id="hw-hostname"></div>
+                        </div>
+                        <div class="form-group row">
+                            <label class="col-sm-4 col-form-label">I2C SDA Pin</label>
+                            <div class="col-sm-8"><input type="number" class="form-control form-control-sm" id="hw-sda"></div>
+                        </div>
+                        <div class="form-group row">
+                            <label class="col-sm-4 col-form-label">I2C SCL Pin</label>
+                            <div class="col-sm-8"><input type="number" class="form-control form-control-sm" id="hw-scl"></div>
+                        </div>
+                        <div class="form-group row">
+                            <label class="col-sm-4 col-form-label">BME280 Address (hex)</label>
+                            <div class="col-sm-8"><input type="text" class="form-control form-control-sm" id="hw-bme-addr" placeholder="0x76"></div>
+                        </div>
+                        <div class="form-group row">
+                            <label class="col-sm-4 col-form-label">MLX90614 Address (hex)</label>
+                            <div class="col-sm-8"><input type="text" class="form-control form-control-sm" id="hw-mlx-addr" placeholder="0x5A"></div>
+                        </div>
+                        <div class="form-group row">
+                            <label class="col-sm-4 col-form-label">WiFi LED Pin</label>
+                            <div class="col-sm-8"><input type="number" class="form-control form-control-sm" id="hw-led"></div>
+                        </div>
+                        <div class="form-group row">
+                            <label class="col-sm-4 col-form-label">Measure Interval (ms)</label>
+                            <div class="col-sm-8"><input type="number" class="form-control form-control-sm" id="hw-interval" min="3000"></div>
+                        </div>
+                    </div>
+                    <button class="btn btn-primary btn-sm" onclick="AlpacaApp.loadHardware()">Refresh</button>
+                    <button class="btn btn-success btn-sm" onclick="AlpacaApp.saveHardware()">Save</button>
+                </div>
+
+                <!-- SAFETY TAB -->
+                <div class="tab-pane fade" id="tab-safety">
+                    <h5>Safety Thresholds</h5>
+                    <p class="text-muted small">Hysteresis: arm = safe threshold, disarm = unsafe threshold</p>
+                    <div id="safety-form"></div>
+                    <button class="btn btn-primary btn-sm" onclick="AlpacaApp.loadSafety()">Refresh</button>
+                    <button class="btn btn-success btn-sm" onclick="AlpacaApp.saveSafety()">Save</button>
+                </div>
+
+                <!-- DOME TAB -->
+                <div class="tab-pane fade" id="tab-dome">
+                    <h5>Dome (Roll-Off Roof) Configuration</h5>
+                    <p class="text-muted small">Pin changes require a reboot to take effect. Timeouts are hot-reloadable.</p>
+
+                    <h6>Live Status</h6>
+                    <div id="dome-status" class="mb-3 p-2" style="background:#1f2a3a;border-radius:4px;">
+                        <div>Shutter: <strong><span id="dome-state">--</span></strong></div>
+                        <div>Endstop Open: <strong><span id="dome-eo">--</span></strong> &nbsp; Endstop Closed: <strong><span id="dome-ec">--</span></strong></div>
+                    </div>
+                    <div class="mb-3">
+                        <button class="btn btn-success btn-sm" onclick="AlpacaApp.domeOpen()">Open</button>
+                        <button class="btn btn-warning btn-sm" onclick="AlpacaApp.domeClose()">Close</button>
+                        <button class="btn btn-danger btn-sm" onclick="AlpacaApp.domeAbort()">Abort</button>
+                    </div>
+
+                    <hr>
+                    <h6>GPIO Pins</h6>
+                    <div id="dome-form">
+                        <div class="form-group row">
+                            <label class="col-sm-4 col-form-label">Motor Open Pin</label>
+                            <div class="col-sm-8"><input type="number" class="form-control form-control-sm" id="dome-mo"></div>
+                        </div>
+                        <div class="form-group row">
+                            <label class="col-sm-4 col-form-label">Motor Close Pin</label>
+                            <div class="col-sm-8"><input type="number" class="form-control form-control-sm" id="dome-mc"></div>
+                        </div>
+                        <div class="form-group row">
+                            <label class="col-sm-4 col-form-label">Motor Power Pin (-1 = none)</label>
+                            <div class="col-sm-8"><input type="number" class="form-control form-control-sm" id="dome-mp"></div>
+                        </div>
+                        <div class="form-group row">
+                            <label class="col-sm-4 col-form-label">Endstop Open Pin</label>
+                            <div class="col-sm-8"><input type="number" class="form-control form-control-sm" id="dome-eo-pin"></div>
+                        </div>
+                        <div class="form-group row">
+                            <label class="col-sm-4 col-form-label">Endstop Close Pin</label>
+                            <div class="col-sm-8"><input type="number" class="form-control form-control-sm" id="dome-ec-pin"></div>
+                        </div>
+                        <div class="form-group row">
+                            <label class="col-sm-4 col-form-label">Endstop Active Low</label>
+                            <div class="col-sm-8"><div class="custom-control custom-switch mt-1">
+                                <input type="checkbox" class="custom-control-input" id="dome-actlow">
+                                <label class="custom-control-label" for="dome-actlow">Switch closes to GND (NC)</label>
+                            </div></div>
+                        </div>
+
+                        <h6 class="mt-3">Timeouts (ms)</h6>
+                        <div class="form-group row">
+                            <label class="col-sm-4 col-form-label">Move Timeout</label>
+                            <div class="col-sm-8"><input type="number" class="form-control form-control-sm" id="dome-tmove"></div>
+                        </div>
+                        <div class="form-group row">
+                            <label class="col-sm-4 col-form-label">Reversal Dead-time</label>
+                            <div class="col-sm-8"><input type="number" class="form-control form-control-sm" id="dome-trev"></div>
+                        </div>
+                        <div class="form-group row">
+                            <label class="col-sm-4 col-form-label">Endstop Debounce</label>
+                            <div class="col-sm-8"><input type="number" class="form-control form-control-sm" id="dome-tdeb"></div>
+                        </div>
+                        <div class="form-group row">
+                            <label class="col-sm-4 col-form-label">Retry Pause</label>
+                            <div class="col-sm-8"><input type="number" class="form-control form-control-sm" id="dome-tretry"></div>
+                        </div>
+
+                        <h6 class="mt-3">Safety</h6>
+                        <div class="form-group row">
+                            <label class="col-sm-4 col-form-label">Safety Override</label>
+                            <div class="col-sm-8"><div class="custom-control custom-switch mt-1">
+                                <input type="checkbox" class="custom-control-input" id="dome-override">
+                                <label class="custom-control-label" for="dome-override">Allow open while UNSAFE</label>
+                            </div></div>
+                        </div>
+                    </div>
+                    <button class="btn btn-primary btn-sm" onclick="AlpacaApp.loadDome()">Refresh</button>
+                    <button class="btn btn-success btn-sm" onclick="AlpacaApp.saveDome()">Save</button>
+                </div>
+
+                <!-- MQTT TAB -->
+                <div class="tab-pane fade" id="tab-mqtt">
+                    <h5>MQTT Notifications</h5>
+                    <div id="mqtt-form">
+                        <div class="form-group row">
+                            <label class="col-sm-4 col-form-label">Enable MQTT</label>
+                            <div class="col-sm-8"><div class="custom-control custom-switch mt-1">
+                                <input type="checkbox" class="custom-control-input" id="mqtt-enabled">
+                                <label class="custom-control-label" for="mqtt-enabled">Enable</label>
+                            </div></div>
+                        </div>
+                        <div class="form-group row">
+                            <label class="col-sm-4 col-form-label">Broker Host</label>
+                            <div class="col-sm-8"><input type="text" class="form-control form-control-sm" id="mqtt-broker"></div>
+                        </div>
+                        <div class="form-group row">
+                            <label class="col-sm-4 col-form-label">Port</label>
+                            <div class="col-sm-8"><input type="number" class="form-control form-control-sm" id="mqtt-port" value="1883"></div>
+                        </div>
+                        <div class="form-group row">
+                            <label class="col-sm-4 col-form-label">Username</label>
+                            <div class="col-sm-8"><input type="text" class="form-control form-control-sm" id="mqtt-user"></div>
+                        </div>
+                        <div class="form-group row">
+                            <label class="col-sm-4 col-form-label">Password</label>
+                            <div class="col-sm-8"><input type="password" class="form-control form-control-sm" id="mqtt-pass"></div>
+                        </div>
+                        <div class="form-group row">
+                            <label class="col-sm-4 col-form-label">Topic Prefix</label>
+                            <div class="col-sm-8"><input type="text" class="form-control form-control-sm" id="mqtt-topic"></div>
+                        </div>
+                        <div class="form-group row">
+                            <label class="col-sm-4 col-form-label">Publish Interval (ms)</label>
+                            <div class="col-sm-8"><input type="number" class="form-control form-control-sm" id="mqtt-interval"></div>
+                        </div>
+                    </div>
+                    <button class="btn btn-primary btn-sm" onclick="AlpacaApp.loadMqtt()">Refresh</button>
+                    <button class="btn btn-success btn-sm" onclick="AlpacaApp.saveMqtt()">Save</button>
+                </div>
+
+                <!-- OTA TAB -->
+                <div class="tab-pane fade" id="tab-ota">
+                    <h5>Firmware Update</h5>
+                    <div class="mb-3">
+                        <strong>Current Version:</strong> <span id="ota-version">loading...</span>
+                    </div>
+                    <div class="form-group">
+                        <label>Upload Firmware (.bin)</label>
+                        <input type="file" class="form-control-file" id="ota-file" accept=".bin">
+                    </div>
+                    <div class="progress mb-2" style="display:none" id="ota-progress-bar">
+                        <div class="progress-bar" role="progressbar" style="width: 0%">0%</div>
+                    </div>
+                    <div id="ota-status" class="mb-2"></div>
+                    <button class="btn btn-danger btn-sm" onclick="AlpacaApp.uploadFirmware()">Upload & Flash</button>
+                </div>
+
+                <!-- BACKUP TAB -->
+                <div class="tab-pane fade" id="tab-backup">
+                    <h5>Settings Backup & Restore</h5>
+                    <div class="mb-3">
+                        <p>Export all settings (hardware, safety, dome, MQTT, WiFi) as a JSON file.</p>
+                        <button class="btn btn-primary btn-sm" onclick="AlpacaApp.exportSettings()">Export Settings</button>
+                    </div>
+                    <hr>
+                    <div class="mb-3">
+                        <p>Import settings from a previously exported JSON file.</p>
+                        <input type="file" class="form-control-file mb-2" id="import-file" accept=".json">
+                        <button class="btn btn-warning btn-sm" onclick="AlpacaApp.importSettings()">Import Settings</button>
+                    </div>
+                    <div id="backup-status"></div>
+                </div>
+
             </div>
         </div>
-        <script>
-            $(document).ready(function () {
-                $.ajaxSetup({ cache: false });
-                $.getJSON("jsondata", function(data) {
-                    $('#form-container').jsonFormer({
-                        title: "Setup",
-                        jsonObject: data
-                    });
-                    data;       
-                });
-                $("#json_update").click(function () {
-                    $.ajax({
-                        url: 'jsondata',
-                        type: 'POST',
-                        dataType: "json",
-                        data: JSON.stringify($('#form-container').jsonFormer('formData')),
-                        contentType: 'application/json',
-                        success: function(msg) {
-
-                        }
-                    })
-                });
-                $("#json_save").click(function () {
-                    $.getJSON("/save_settings", function(data) {
-                        alert(data['saved'] == true? "Saved succesfully" : "Save failed!");
-                    })
-                });
-                $("#json_refresh").click(function () {
-                    location.reload(); // until json-only refresh is ready
-                });
-                $.getJSON("/links", function(data) {
-                    let path = window.location.pathname;
-                    for(name in data) {
-                        let url = data[name];
-                        let navitem = $('<li class="nav-item"><a class="nav-link" href="#"></a></li>');
-                        let a = navitem.find("a");
-                        a.attr('href', url).text(name);
-                        if(path == url)
-                            a.addClass('active');
-                        $("#nav-links").append(navitem);
-                    }
-                });
-            });
-        </script>
-    </body>
+    </div>
+</div>
+</body>
 </html>
